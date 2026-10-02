@@ -73,15 +73,33 @@ These came from the owner in conversation. The design doc already reflects most 
   `rollForward: latestFeature`. NuGet restore works through the proxy.
 - **Node 22 and npm** are present and the npm registry is reachable. Chromium and Playwright are pre-installed (do not run
   `playwright install`).
-- **No Docker daemon**, so Aspire's containers cannot run here. The AppHost can only be compile-checked. For local runs,
-  install Postgres from apt (`apt-get install -y postgresql`; not tried yet) and set `ConnectionStrings__roster`.
-- **Blocked by the egress policy** in the first session: `aspire.dev`, `learn.microsoft.com`, `devblogs.microsoft.com`,
-  `docs.github.com`, `builds.dotnet.microsoft.com`. The owner added the first three afterwards, but the session's policy
-  is fixed at start, so a new session may now reach them. Try them before assuming.
+- **Docker works; start the daemon yourself.** The first session assumed there was none. There is no socket at start, but
+  `nohup dockerd > <scratchpad>/dockerd.log 2>&1 &` brings one up in a few seconds, and Aspire runs containers on it.
+- **Container images:** `quay.io` is blocked (403), and Docker Hub allows a few anonymous pulls and then rate-limits.
+  `mirror.gcr.io` (Google's Docker Hub mirror) works. Aspire 13.6's Keycloak wants `quay.io/keycloak/keycloak:26.6`, so:
+  `docker pull mirror.gcr.io/keycloak/keycloak:26.6 && docker tag mirror.gcr.io/keycloak/keycloak:26.6 quay.io/keycloak/keycloak:26.6`.
+  Do the same for Postgres (`mirror.gcr.io/library/postgres:<tag Aspire wants>`) when it joins. This is a sandbox
+  workaround only; nothing in the repo refers to the mirror.
+- **Running the AppHost:** `cd src/Roster.AppHost && nohup dotnet run --launch-profile http > <scratchpad>/apphost.log 2>&1 &`.
+  With `AspireUseCliBundle=true`, `dotnet run` fetches the Aspire CLI through `dnx` (works through the proxy) and the CLI
+  runs the app. Its console output is a TUI, so read state with
+  `~/.nuget/packages/aspire.cli.linux-x64/13.6.0/tools/net10.0/linux-x64/aspire describe --format Json --non-interactive --apphost Roster.AppHost.csproj < /dev/null`
+  and rebuild one project in place with `aspire resource api rebuild ...` (same flags). The CLI creates an ASP.NET Core
+  dev certificate on first run, which makes Aspire switch Keycloak to HTTPS on `https://localhost:8080`; the API trusts
+  it through the `SSL_CERT_DIR` Aspire sets.
+- **Secrets for local runs:** `dotnet user-secrets list` in `src/Roster.AppHost` shows the generated
+  `roster-admin-password` (sign in as `admin@roster.local`), the client secret and Keycloak's own admin password.
+- **Browser checks:** Playwright is installed globally for Node. Run scripts with `NODE_PATH=$(npm root -g) node script.js`,
+  launch Chromium with `--no-proxy-server` (localhost must not go through the proxy) and `ignoreHTTPSErrors: true` (this
+  Chromium does not trust the dev certificate). Use `curl --noproxy '*'` for localhost too.
+- **Blocked by the egress policy** (still, in the second session): `aspire.dev`, `learn.microsoft.com`, `keycloak.org`,
+  `github.com` release downloads. `code.claude.com` and `api.nuget.org` work. Try again in a new session; the policy is
+  fixed at session start.
 - **Reading docs without the sites:** the git proxy serves public repos. Shallow, no-checkout, sparse:
   `GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 --filter=blob:none --no-checkout <url>` then
   `git sparse-checkout set <paths>` and `git checkout`. One clone at a time, into the session scratchpad, never the repo.
-  Useful repos: `microsoft/aspire.dev` (docs under `src/frontend/src/content/docs`), `microsoft/agent-framework`
+  Useful repos: `microsoft/aspire.dev` (docs under `src/frontend/src/content/docs`), `microsoft/aspire` (integration
+  sources under `src/`, the Keycloak sample under `playground/keycloak`, templates under `src/Aspire.ProjectTemplates`), `microsoft/agent-framework`
   (`dotnet/src`, `docs/decisions` ADRs, samples under `dotnet/samples`), `github/copilot-sdk` (`docs/auth`, `docs/setup`).
 - **Shell working directory drifts** after a `cd`. Use absolute paths.
 - Git identity is already `Claude <noreply@anthropic.com>`. Push with `git push -u origin claude/modest-lamport-rm5j2v`

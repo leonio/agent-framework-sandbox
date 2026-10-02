@@ -45,5 +45,6 @@ app.UseAuthorization();
 app.MapDefaultEndpoints();
 app.MapAuthEndpoints();
 app.MapProfileEndpoints();
+app.MapCredentialEndpoints();
 
 app.Run();

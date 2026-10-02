@@ -3,10 +3,10 @@ namespace Roster.Platform.Data;
 /// <summary>The job kinds runners know how to handle.</summary>
 public static class JobKinds
 {
-    /// <summary>Run one phase of an assignment. Payload: <see cref="Queue.PhaseRunPayload"/>.</summary>
+    /// <summary>Run one phase of an assignment. Payload: <see cref="Roster.Platform.Queue.PhaseRunPayload"/>.</summary>
     public const string PhaseRun = "phase.run";
 
-    /// <summary>Run one retro facilitator turn. Payload: <see cref="Queue.RetroTurnPayload"/>.</summary>
+    /// <summary>Run one retro facilitator turn. Payload: <see cref="Roster.Platform.Queue.RetroTurnPayload"/>.</summary>
     public const string RetroTurn = "retro.turn";
 }
 
@@ -27,7 +27,7 @@ public enum JobState
 /// <summary>
 /// A row in the work queue. The queue is just this table: a runner claims the oldest due job for its pool with
 /// <c>FOR UPDATE SKIP LOCKED</c>, so many runners can claim at once without blocking each other or taking the same job.
-/// See <see cref="Queue.PostgresJobQueue"/> for the whole life cycle.
+/// See <see cref="Roster.Platform.Queue.PostgresJobQueue"/> for the whole life cycle.
 /// </summary>
 public sealed class Job
 {
@@ -83,7 +83,7 @@ public sealed class RunEvent
 
     public Guid AssignmentId { get; set; }
 
-    /// <summary>Such as <c>phase.started</c>, <c>findings.added</c>, <c>retro.message</c>. See <see cref="Queue.EventKinds"/>.</summary>
+    /// <summary>Such as <c>phase.started</c>, <c>findings.added</c>, <c>retro.message</c>. See <see cref="Roster.Platform.Queue.EventKinds"/>.</summary>
     public required string Kind { get; set; }
 
     public string PayloadJson { get; set; } = "{}";

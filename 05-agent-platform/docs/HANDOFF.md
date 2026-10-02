@@ -115,6 +115,10 @@ These came from the owner in conversation. The design doc already reflects most 
   `playwright install`).
 - **Docker works; start the daemon yourself.** The first session assumed there was none. There is no socket at start, but
   `nohup dockerd > <scratchpad>/dockerd.log 2>&1 &` brings one up in a few seconds, and Aspire runs containers on it.
+- **Postgres for scratch runs:** `docker run -d --name roster-pg -e POSTGRES_PASSWORD=dev -p 127.0.0.1:55432:5432 postgres:17`
+  (pulled from Docker Hub before the rate limit; `mirror.gcr.io/library/postgres:17` otherwise), then
+  `ConnectionStrings__roster=Host=localhost;Port=55432;Database=roster;Username=postgres;Password=dev`. `dotnet ef` is
+  installed with `dotnet tool install --global dotnet-ef --version 10.0.12` and lives in `~/.dotnet/tools`.
 - **Container images:** `quay.io` is blocked (403), and Docker Hub allows a few anonymous pulls and then rate-limits.
   `mirror.gcr.io` (Google's Docker Hub mirror) works. Aspire 13.6's Keycloak wants `quay.io/keycloak/keycloak:26.6`, so:
   `docker pull mirror.gcr.io/keycloak/keycloak:26.6 && docker tag mirror.gcr.io/keycloak/keycloak:26.6 quay.io/keycloak/keycloak:26.6`.
@@ -275,10 +279,23 @@ and the doc says plainly what was run and what was only compiled.
 - JsonSchema.Net 9: `JsonSchema.FromText(text, baseUri: ...)` and `schema.Evaluate(JsonElement, new EvaluationOptions
   { OutputFormat = OutputFormat.List })`; errors are in `results.Details[i].Errors`. Give each schema its own base URI.
 - `ContractSchemas` changed the agent hashes once (strict-mode schema shape). Nothing was stored before that.
+- **Never share a `DbContext` between concurrent calls.** The review phase runs three agents at once, so every platform
+  service takes `IDbContextFactory<RosterDb>` and opens a short-lived context per operation, and each parallel agent
+  runs in its own DI scope.
+- EF Core cannot express `FOR UPDATE SKIP LOCKED` or `LISTEN`. The claim is one `FromSql` statement (parameterised,
+  snake_case names); `NOTIFY` is `pg_notify` through `ExecuteSql`; `LISTEN` uses a plain `NpgsqlConnection` in
+  `EventStream`. Everything else is LINQ, `ExecuteUpdate` or `ExecuteDelete`.
+- Aspire's `EnrichNpgsqlDbContext` works with `AddPooledDbContextFactory` and turns on the retrying execution strategy.
+  That is fine as long as nobody opens explicit transactions; wrap them in `CreateExecutionStrategy().ExecuteAsync` if
+  one is ever needed.
+- Unique-index races (agent versions, idempotency keys) are handled by looking first and catching
+  `PostgresException { SqlState: "23505" }` for the rare race, so EF does not log an error on every repeat.
+- Inside an EF query, do not reach into a loaded entity's collection (`a.Phases.Single(...)` inside `Where`): EF tries
+  to translate it and fails. Compute the value first.
 
 ## 7. Prompt to start the next session
 
 > Read `05-agent-platform/docs/HANDOFF.md` and `05-agent-platform/docs/architecture.md` on branch
-> `claude/modest-lamport-rm5j2v`, then continue Roster slice 1 from step 2 of section 5 (the platform). Many small commits, push as you
+> `claude/modest-lamport-rm5j2v`, then continue Roster slice 1 from step 3 of section 5 (the migrator). Many small commits, push as you
 > go, plenty of comments, no PRs, no tests. Install the .NET 10 SDK first (`apt-get update && apt-get install -y
 > dotnet-sdk-10.0`) and start Docker (`dockerd`) as section 3 describes.

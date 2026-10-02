@@ -166,24 +166,18 @@ Things worth knowing about the code:
 
 Commit after each numbered step and push. Build after every file group.
 
-1. **Runtime remainder** (`Roster.Agents.Runtime`)
-   - `PromptRenderer`: render an input record as text; wrap `[Untrusted]` properties in `<untrusted field="name">` blocks and
-     neutralise a closing tag inside the content.
-   - `ChatClientFactory`: kinds `openai` (OpenAI SDK `OpenAIClient(new ApiKeyCredential(key), new OpenAIClientOptions { Endpoint })`
-     then `.GetChatClient(model).AsIChatClient()`) and `fake`. Wrap with `UseOpenTelemetry(sourceName: "Roster.Models")`,
-     message content capture **off** unless configured. Add a per-endpoint concurrency gate (`DelegatingChatClient` plus a
-     semaphore keyed by endpoint, capacity `ResolvedModel.MaxConcurrency`).
-   - Fake client: structured output (response format has a schema) returns per-agent heuristics for the three reviewers
-     (the fixture diff has SQL by interpolation, a logged card number, a committed `sk_live_` key, a `switch` on provider,
-     a per-call `HttpClient`) and otherwise a schema-driven sampler. Conversational with tools: a small script for the
-     facilitator that calls `get_timeline`, asks a few questions, and on "wrap up" calls `propose_cards`.
-   - `AgentRunner : IAgentRunner`. `RunAsync`: check contract types, check placement (`PlacementPolicy.Satisfies`), resolve
-     the model, pick the strategy (Native, or Prompted if the endpoint lacks native structured output), build a
-     `ChatClientAgent` per call, run in an `AgentSession` so one **repair** attempt can follow a bad parse, deserialize with
-     `ContractJson.Options` and validate with JsonSchema.Net, write the ledger (begin and complete), capture tool calls,
-     `TextReasoningContent` and usage. `ChatAsync`: streaming, accumulate text, call `OnPartial`. Do **not** rely on
-     `RunAsync<T>`: it exists only on `ChatClientAgent` and decorators hide it.
-   - `AddRosterAgentRuntime()` in DI (runner scoped; it depends on scoped platform services).
+1. ~~**Runtime remainder**~~ **Done** (second session). What the platform needs to know about it:
+   - Register with `services.AddRosterAgentRuntime(typeof(Findings).Assembly)` and provide the three scoped services
+     `IModelResolver`, `ICapabilityBinder`, `IInvocationLedger`. Set `AgentRunnerOptions.HostPlacement` per runner pool.
+   - Ledger outcomes are `succeeded`, `repaired`, `invalid-output`, `failed`, `cancelled` (`AgentRunner.Outcomes`).
+     `InvocationStart.OutputStrategy` is `native`, `prompted` or `text` (chat turns). `ToolCallsJson` is an array of
+     `{ name, arguments, result }`. Failures and cancellations still call `CompleteAsync`.
+   - The fake endpoint: `kind = fake`, model `fake`, `fake-flaky` (first typed reply cut off, exercises repair) or
+     `fake-slow` (2 s per call). Seed the shared endpoint with model `fake`.
+   - `propose_cards` must accept `{ "cards": [ { "sentiment": "good|bad|ugly", "text": "...", "agent": "name or null" } ] }`:
+     the fake facilitator sends that, and the facilitator's instructions describe it. `get_timeline` may return any
+     JSON (a list of strings is simplest); the fake quotes its first sentence-like string.
+   - Model-call telemetry is under `Roster.Models`; service defaults already collect it.
 2. **Platform** (`Roster.Platform`: EF Core 10 + Npgsql 10.0.3; no ASP.NET Core Identity, Keycloak owns accounts)
    - Entities: `AppUser` (**id = Keycloak `sub`**, display name and email refreshed from the claims at each sign-in, title), `UserCredential` (kind `api-key` | `github-token`, masked hint, ciphertext),
      `ModelEndpoint` (owner or shared, kind, base URL, default model, tier-to-model map, capabilities, limits, credential

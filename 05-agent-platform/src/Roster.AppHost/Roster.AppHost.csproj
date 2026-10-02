@@ -1,0 +1,21 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.6.0">
+
+  <!--
+    Local topology. Keycloak (identity) and the API so far; Postgres, the migrator, the runner and the web app join as
+    they are built (HANDOFF section 5, step 6).
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AspireUseCliBundle>true</AspireUseCliBundle>
+    <UserSecretsId>eaf402b4-c576-4180-b733-6998f5713b52</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Roster.Api\Roster.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.Keycloak" />
+  </ItemGroup>
+
+</Project>

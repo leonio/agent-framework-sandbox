@@ -106,12 +106,15 @@ public sealed class PrReviewScenario(
                 new { phase = Review, agent = reviewer.Name, outcome = "succeeded", findings = stored, invocationId = result.InvocationId }, cancellationToken);
             return new ReviewerResult(reviewer.Name, result.InvocationId, stored, Error: null);
         }
-        catch (AgentRunException ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            // Every started agent reports how it ended, or the UI would show it running forever. Failures before the
+            // model call (routing, a missing endpoint) have no ledger row, so no invocation id.
+            Guid? invocationId = (ex as AgentRunException)?.InvocationId;
             logger.LogWarning("Reviewer {Agent} failed on {AssignmentId}: {Error}", reviewer.Name, run.AssignmentId, ex.Message);
             await events.PublishAsync(run.AssignmentId, EventKinds.AgentCompleted,
-                new { phase = Review, agent = reviewer.Name, outcome = "failed", error = ex.Message, invocationId = ex.InvocationId }, cancellationToken);
-            return new ReviewerResult(reviewer.Name, ex.InvocationId, 0, ex.Message);
+                new { phase = Review, agent = reviewer.Name, outcome = "failed", error = ex.Message, invocationId }, cancellationToken);
+            return new ReviewerResult(reviewer.Name, invocationId, 0, ex.Message);
         }
     }
 
@@ -148,5 +151,5 @@ public sealed class PrReviewScenario(
     }
 
     /// <summary>One reviewer's part of the review phase output.</summary>
-    private sealed record ReviewerResult(string Agent, Guid InvocationId, int Findings, string? Error);
+    private sealed record ReviewerResult(string Agent, Guid? InvocationId, int Findings, string? Error);
 }

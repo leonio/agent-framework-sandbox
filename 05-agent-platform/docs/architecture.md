@@ -404,7 +404,7 @@ Aspire facts come from the `microsoft/aspire.dev` docs source and Copilot facts 
 
 | Item | Fact |
 |---|---|
-| Aspire | 13.6.0 (published 29 Sep 2026). `AddViteApp`, `WithReplicas`, `AddOpenAI(...).WithEndpoint(...)`, `WithRepl`, `aspire publish` / `aspire deploy`. Keycloak integration is preview (`13.6.0-preview.1.26479.8`, image `quay.io/keycloak/keycloak:26.6`, starts with `start-dev --import-realm`, switches to HTTPS when a dev certificate is present). No pgvector support in the Postgres integration. |
+| Aspire | 13.6.0 (published 29 Sep 2026). `AddViteApp`, `WithReplicas`, `AddOpenAI(...).WithEndpoint(...)`, `WithRepl`, `aspire publish` / `aspire deploy`. Keycloak integration is preview (`13.6.0-preview.1.26479.8`, image `quay.io/keycloak/keycloak:26.6`, starts with `start-dev --import-realm`, switches to HTTPS when a dev certificate is present). `AddViteApp` installs npm packages by default before starting the dev server. No pgvector support in the Postgres integration. |
 | Aspire dashboard | GenAI visualizer exists; best with message content recorded. 13.6 keeps up to ten completed runs per application. |
 | Agent Framework | `Microsoft.Agents.AI`, `.Workflows`, `.GitHub.Copilot` are 1.23.0 stable. A2A, AG-UI hosting are `1.23.0-preview`. DurableTask is `1.16.0-preview` and lives in its own repository. |
 | Structured output | `RunAsync<T>` only on `ChatClientAgent`; decorators hide it (ADR 0036, proposed). |
@@ -416,16 +416,16 @@ Aspire facts come from the `microsoft/aspire.dev` docs source and Copilot facts 
 
 ## 16. Risks and open questions
 
-- **Only partly run end to end.** The second session found Docker usable in the sandbox and ran the AppHost: Keycloak
-  imported the realm, and a browser signed in as the seeded admin and as a newly registered member, signed out (ending
-  the Keycloak session) and was refused an open redirect. The agent runtime was smoke-run against the fake endpoint
-  (reviewers in parallel, repair, prompted output, placement refusal, concurrency gate, a full retro conversation with
-  tools). The platform was smoke-run against Postgres 17 in Docker: migrations, the queue with concurrent workers, a
-  full assignment from fetch to triage, a retro ending in confirmed cards, scorecards, routing and access rules,
-  retries until dead, and the LISTEN event stream. The `openai` endpoint kind and the GitHub PR source are compiled but
-  have not met a real model or GitHub: the sandbox cannot reach either. The migrator, the runners (including a runner
-  killed mid-job and the job reclaimed by another) and every API endpoint have run under Aspire, the API driven through
-  a browser signed in with Keycloak. The web app is still to be built and run.
+- **Run end to end, but only with the fake endpoint.** Slice 1 has run whole under Aspire in the sandbox: Keycloak,
+  Postgres, the migrator, two runner replicas, the API and the web app. A browser drove it through the web app as a
+  person would: sign-in through Keycloak, settings (title, a write-only key, a shared endpoint), an assignment on the
+  fixture watched live, triage with a reason, the ledger with fenced inputs and reasoning, a retro conversation ending
+  in an edited and confirmed card, scorecards by agent hash and by title, and a second person refused the first one's
+  assignment. Before that the runtime, the platform and every API endpoint were smoke-run on their own (repair,
+  prompted output, placement refusal, the concurrency gate, the queue under concurrent workers, retries until dead, a
+  runner killed mid-job and its job reclaimed). **Not run:** the `openai` endpoint kind and the GitHub PR source are
+  compiled only. The sandbox cannot reach a model or GitHub, so nothing has met a real model's output yet; expect the
+  first real run to find prompt and schema details the fake does not.
 - **Keycloak integration is preview.** Its API may change between Aspire releases. The surface used is small:
   `AddKeycloak`, `WithDataVolume`, `WithRealmImport`, `AddKeycloakOpenIdConnect`.
 - **Copilot specifics.** The SDK's structured output is experimental, and the runtime download happens at build time.
@@ -435,8 +435,9 @@ Aspire facts come from the `microsoft/aspire.dev` docs source and Copilot facts 
   only the assignment's owner and the facilitator can read it.
 - **Prompt injection.** Everything from outside (PR text, diffs, retro messages, lessons, knowledge) is fenced and
   labelled untrusted. Reviewers are read-only. Anything that writes sits behind a gate.
-- **Open:** token streaming through Postgres is a stopgap; the bus swap replaces it. Per-endpoint rate limiting is
-  per-runner in slice 1 and becomes global with a shared counter.
+- **Open:** token streaming through Postgres is a stopgap; the bus swap replaces it. Per-endpoint limits: the
+  concurrency gate works per runner process in slice 1; the requests-per-minute cap is stored but nothing enforces it
+  yet (the settings page does not offer it). Both become global with a shared counter.
 
 ## 17. Working agreement
 

@@ -77,7 +77,7 @@ internal static class FakeReviewers
                 "Move the queries into a repository or the existing application service and inject it.",
                 "medium", 0.75, FileFilter: new Regex(@"Controller", Options)),
             new("Dependency created with new instead of injected",
-                new Regex(@"new\s+\w+(Service|Repository|Gateway|Client)\s*\(", Options),
+                new Regex(@"new\s+(?!HttpClient\b)\w+(Service|Repository|Gateway|Client)\s*\(", Options), // HttpClient has its own rule
                 "A collaborator is constructed directly, which hard-wires it and makes the code hard to test.",
                 "Register it in dependency injection and take it through the constructor.",
                 "low", 0.6),

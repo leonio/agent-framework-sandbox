@@ -39,9 +39,13 @@ IResourceBuilder<KeycloakResource> keycloak = builder.AddKeycloak("keycloak", po
     .WithEnvironment("ROSTER_API_CLIENT_SECRET", apiClientSecret)
     .WithEnvironment("ROSTER_ADMIN_PASSWORD", rosterAdminPassword);
 
+// The API: signs people in with Keycloak, serves the web app, enqueues work for the runners and streams events.
 builder.AddProject<Projects.Roster_Api>("api")
     .WithReference(keycloak)
     .WaitFor(keycloak)
-    .WithEnvironment("Keycloak__ClientSecret", apiClientSecret);
+    .WithEnvironment("Keycloak__ClientSecret", apiClientSecret)
+    .WithReference(rosterDb)
+    .WaitForCompletion(migrator)
+    .WithEnvironment("Vault__Key", vaultKey);
 
 builder.Build().Run();

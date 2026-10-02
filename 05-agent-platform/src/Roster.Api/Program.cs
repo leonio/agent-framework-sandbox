@@ -1,4 +1,7 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Roster.Api.Auth;
+using Roster.Api.Http;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -10,8 +13,19 @@ builder.AddServiceDefaults();
 // unless it says AllowAnonymous. See Auth/RosterAuth.cs for the whole flow.
 builder.AddRosterAuth();
 
-// Errors and bare status codes (401, 403, 404) come back as RFC 9457 problem details, which the web app can show.
+// The platform: database, agent runtime, queue, scenarios, retro, scorecards (see AddRosterPlatform), plus the live
+// event stream, which only the API needs (one LISTEN connection serving every browser watching an assignment).
+builder.AddRosterPlatform();
+builder.Services.AddRosterEventStream();
+
+// JSON on the wire: camelCase (the default) and enums as camelCase strings ("awaitingTriage", "rejected").
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
+
+// Errors and bare status codes (401, 403, 404) come back as RFC 9457 problem details, which the web app can show. The
+// platform's "no" exceptions map to 400, 403, 404 and 409 (Http/PlatformExceptionHandler.cs).
 builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<PlatformExceptionHandler>();
 
 WebApplication app = builder.Build();
 

@@ -6,6 +6,7 @@
   -->
   <ItemGroup>
     <ProjectReference Include="..\Roster.ServiceDefaults\Roster.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Roster.Platform\Roster.Platform.csproj" />
   </ItemGroup>
 
   <ItemGroup>

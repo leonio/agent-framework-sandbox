@@ -28,6 +28,10 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<PlatformExceptionHandler>();
 
+// An OpenAPI document describing every endpoint, at /openapi/v1.json (Development only, and readable without signing
+// in there, so tools and the web app's type generation can fetch it).
+builder.Services.AddOpenApi();
+
 WebApplication app = builder.Build();
 
 app.UseExceptionHandler();
@@ -43,6 +47,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapDefaultEndpoints();
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi().AllowAnonymous();
+}
+
 app.MapAuthEndpoints();
 app.MapProfileEndpoints();
 app.MapCredentialEndpoints();

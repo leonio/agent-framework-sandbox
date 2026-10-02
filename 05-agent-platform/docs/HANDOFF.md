@@ -131,6 +131,11 @@ These came from the owner in conversation. The design doc already reflects most 
   `rollForward: latestFeature`. NuGet restore works through the proxy.
 - **Node 22 and npm** are present and the npm registry is reachable. Chromium and Playwright are pre-installed (do not run
   `playwright install`).
+- **The container can be paused between turns.** When it resumes, processes are gone (Docker daemon, AppHost,
+  runners) but the disk is intact. Restart with `nohup dockerd ... &`, `docker start roster-pg`, remove stale Aspire
+  containers (`docker ps -a`) and start the AppHost again.
+- **Never `pkill -f <name>` with a name that appears in your own command line**: it kills the shell running it. Use a
+  bracket pattern (`pkill -f "Roster.Runne[r]"`) or keep PIDs (`$!`) in a script.
 - **Docker works; start the daemon yourself.** The first session assumed there was none. There is no socket at start, but
   `nohup dockerd > <scratchpad>/dockerd.log 2>&1 &` brings one up in a few seconds, and Aspire runs containers on it.
 - **Postgres for scratch runs:** `docker run -d --name roster-pg -e POSTGRES_PASSWORD=dev -p 127.0.0.1:55432:5432 postgres:17`
@@ -146,7 +151,10 @@ These came from the owner in conversation. The design doc already reflects most 
   With `AspireUseCliBundle=true`, `dotnet run` fetches the Aspire CLI through `dnx` (works through the proxy) and the CLI
   runs the app. Its console output is a TUI, so read state with
   `~/.nuget/packages/aspire.cli.linux-x64/13.6.0/tools/net10.0/linux-x64/aspire describe --format Json --non-interactive --apphost Roster.AppHost.csproj < /dev/null`
-  and rebuild one project in place with `aspire resource api rebuild ...` (same flags). The CLI creates an ASP.NET Core
+  and rebuild one project in place with `aspire resource <name> rebuild ...` (same flags; with replicas, use the
+  resource's full name from `describe`, such as `runner-gtssggya`). `aspire otel spans|logs [--search ...] [--trace-id ...]
+  --format Json` reads the dashboard's telemetry, which is how the 500 in the API run was diagnosed. The Postgres image
+  Aspire 13.6 wants is `postgres:18.3`: pull `mirror.gcr.io/library/postgres:18.3` and tag it `docker.io/library/postgres:18.3`. The CLI creates an ASP.NET Core
   dev certificate on first run, which makes Aspire switch Keycloak to HTTPS on `https://localhost:8080`; the API trusts
   it through the `SSL_CERT_DIR` Aspire sets.
 - **Secrets for local runs:** `dotnet user-secrets list` in `src/Roster.AppHost` shows the generated
@@ -309,12 +317,19 @@ and the doc says plainly what was run and what was only compiled.
   one is ever needed.
 - Unique-index races (agent versions, idempotency keys) are handled by looking first and catching
   `PostgresException { SqlState: "23505" }` for the rare race, so EF does not log an error on every repeat.
+- **Filter and order before projecting into a positional record.** `Select(a => new Summary(a.Id, ...)).Where(s => s.Id == id)`
+  does not translate (EF cannot map the constructor parameters back to columns); it was a 500 on POST /api/assignments.
+- A job enqueued while another job runs (the next phase) gets the running job's trace context, so a whole assignment
+  is one trace in the dashboard. Idle claim polling is wrapped in `SuppressInstrumentationScope`, or it floods the
+  dashboard with one-span traces.
+- `InvalidOperationException` means "conflict" only when the platform throws it as `ConflictException`; EF throws the
+  plain type for programming errors (empty `SingleAsync`), which must stay 500s.
 - Inside an EF query, do not reach into a loaded entity's collection (`a.Phases.Single(...)` inside `Where`): EF tries
   to translate it and fails. Compute the value first.
 
 ## 7. Prompt to start the next session
 
 > Read `05-agent-platform/docs/HANDOFF.md` and `05-agent-platform/docs/architecture.md` on branch
-> `claude/modest-lamport-rm5j2v`, then continue Roster slice 1 from step 3 of section 5 (the migrator). Many small commits, push as you
+> `claude/modest-lamport-rm5j2v`, then continue Roster slice 1 from step 7 of section 5 (the web app). Many small commits, push as you
 > go, plenty of comments, no PRs, no tests. Install the .NET 10 SDK first (`apt-get update && apt-get install -y
 > dotnet-sdk-10.0`) and start Docker (`dockerd`) as section 3 describes.

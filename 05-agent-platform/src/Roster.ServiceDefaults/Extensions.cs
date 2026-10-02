@@ -18,6 +18,11 @@ public static class Extensions
     private const string HealthEndpointPath = "/health";
     private const string AlivenessEndpointPath = "/alive";
 
+    // Model calls: one "chat" span per call with model, tokens and finish reason, plus token-usage and duration
+    // metrics. Must match ModelClientOptions.TelemetrySourceName in Roster.Agents.Runtime (not referenced from here,
+    // so service defaults stay independent of the agent code).
+    private const string ModelTelemetrySource = "Roster.Models";
+
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         builder.ConfigureOpenTelemetry();
@@ -48,11 +53,13 @@ public static class Extensions
             {
                 metrics.AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddRuntimeInstrumentation();
+                    .AddRuntimeInstrumentation()
+                    .AddMeter(ModelTelemetrySource);
             })
             .WithTracing(tracing =>
             {
                 tracing.AddSource(builder.Environment.ApplicationName)
+                    .AddSource(ModelTelemetrySource)
                     .AddAspNetCoreInstrumentation(options =>
                         options.Filter = context =>
                             !context.Request.Path.StartsWithSegments(HealthEndpointPath)

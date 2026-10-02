@@ -28,10 +28,40 @@ namespace IncidentTriage.Rag;
 ///   <item>GraphRAG over services/dependencies ("checkout-api calls payments-gateway") to reason about blast radius.</item>
 /// </list>
 /// </remarks>
-public sealed class KnowledgeIndex(IEmbeddingGenerator<string, Embedding<float>> embeddings, RagOptions options)
+public sealed class KnowledgeIndex : IAsyncDisposable
 {
-    private readonly InMemoryVectorIndex _knowledge = new(embeddings);
-    private readonly InMemoryVectorIndex _code = new(embeddings);
+    private readonly RagOptions options;
+    private readonly IVectorIndex _knowledge;
+    private readonly IVectorIndex _code;
+    private readonly PgVectorStore? _store;
+
+    /// <summary>
+    /// With <see cref="RagOptions.ConnectionString"/> set, both collections live in PostgreSQL + pgvector
+    /// (see docker-compose.yml): the knowledge base is embedded once and survives restarts. Otherwise they
+    /// are the in-memory indexes, so the sample still runs with nothing installed.
+    /// </summary>
+    public KnowledgeIndex(IEmbeddingGenerator<string, Embedding<float>> embeddings, RagOptions options)
+    {
+        this.options = options;
+        if (string.IsNullOrWhiteSpace(options.ConnectionString))
+        {
+            _knowledge = new InMemoryVectorIndex(embeddings);
+            _code = new InMemoryVectorIndex(embeddings);
+        }
+        else
+        {
+            _store = new PgVectorStore(options.ConnectionString);
+            _knowledge = new PgVectorIndex(_store, "knowledge", embeddings);
+            _code = new PgVectorIndex(_store, "code", embeddings);
+        }
+    }
+
+    public string Describe() => _store is null ? "in-memory" : "PostgreSQL + pgvector";
+
+    /// <summary>Creates the pgvector schema if needed. A no-op for the in-memory store.</summary>
+    public Task InitializeAsync(CancellationToken ct = default) => _store?.EnsureSchemaAsync(ct) ?? Task.CompletedTask;
+
+    public ValueTask DisposeAsync() => _store?.DisposeAsync() ?? ValueTask.CompletedTask;
 
     // Full text of every knowledge document, for "small-to-big" retrieval (see SearchKnowledgeForProviderAsync).
     private readonly Dictionary<string, string> _documents = [];
@@ -66,7 +96,7 @@ public sealed class KnowledgeIndex(IEmbeddingGenerator<string, Embedding<float>>
     public async Task<int> IndexRepositoryAsync(RepoSnapshot snapshot, CancellationToken ct = default)
     {
         // Per-run collection: clear so code from a previous repo never leaks into this one.
-        _code.Clear();
+        await _code.ClearAsync(ct);
 
         var extensions = options.CodeExtensions.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var files = Directory.EnumerateFiles(snapshot.LocalPath, "*", SearchOption.AllDirectories)

@@ -1,0 +1,24 @@
+# PostgreSQL + pgvector for the incident-triage RAG index.
+#   docker compose up -d
+#   dotnet run --project src/IncidentTriage -- --Triage:Rag:ConnectionString="Host=localhost;Port=5433;Username=triage;Password=triage;Database=triage"
+# Or set the environment variable Triage__Rag__ConnectionString to the same value.
+# The app creates the extension and table itself on start-up (Rag/PgVectorIndex.cs); the volume keeps
+# embeddings between runs, so the runbooks are only embedded once. `docker compose down -v` resets it.
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: triage
+      POSTGRES_PASSWORD: triage
+      POSTGRES_DB: triage
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U triage -d triage"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  pgdata:

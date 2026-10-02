@@ -51,6 +51,18 @@ Useful switches:
 
 Set `MOCK_TRACE_FILE=trace.txt` to see exactly what each agent receives: instructions (house rules + prompt + the skills list the framework adds), the injected RAG context, tool calls and tool results.
 
+### With a persistent RAG store (PostgreSQL + pgvector)
+
+By default the vector index is in memory. To keep embeddings in Postgres (runbooks are embedded once, later runs reuse them):
+
+```bash
+docker compose up -d
+cd src/IncidentTriage
+dotnet run -- --Triage:Rag:ConnectionString "Host=localhost;Port=5433;Username=triage;Password=triage;Database=triage"
+```
+
+The app creates the `vector` extension and `chunks` table itself; `docker compose down -v` resets the data. The code collection is still cleared and rebuilt per run. See `Rag/PgVectorIndex.cs`.
+
 ### With a real model
 
 ```bash
@@ -123,5 +135,5 @@ Jira and Confluence stay in **dry-run** (they print the request they would send)
 ## Limitations
 
 - The offline mock reasons with regexes. It is there to exercise the plumbing, not to be clever; switch to a real model to see real judgement.
-- The in-memory vector index re-embeds the knowledge base and the repository on every run. Fine for a sample, expensive for a big repo with a real embedding model; see `Rag/InMemoryVectorIndex.cs`.
+- The default in-memory vector index re-embeds the knowledge base and the repository on every run (use the Postgres store above to avoid that for the knowledge base). Fine for a sample, expensive for a big repo with a real embedding model; see `Rag/InMemoryVectorIndex.cs`.
 - Local folders are read as-is (their working tree), so the commit/tag prompt only applies to remote repositories.

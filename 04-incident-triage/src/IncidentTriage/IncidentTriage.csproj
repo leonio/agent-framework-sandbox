@@ -20,6 +20,8 @@
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
     <!-- Keyless (Entra ID) auth for Azure OpenAI. -->
     <PackageReference Include="Azure.Identity" />
+    <!-- PostgreSQL driver for the optional pgvector store (Rag/PgVectorIndex.cs). -->
+    <PackageReference Include="Npgsql" />
     <!-- Referenced so the commented-out MCP example in Tools/McpObservabilityTools.cs compiles when enabled. -->
     <PackageReference Include="ModelContextProtocol" />
     <PackageReference Include="Microsoft.Extensions.Configuration" />

@@ -73,6 +73,12 @@ public sealed class TriageOptions
 
 public sealed class RagOptions
 {
+    /// <summary>
+    /// Npgsql connection string for a PostgreSQL + pgvector store, e.g. the one in docker-compose.yml.
+    /// Empty (default) keeps the vector index in memory.
+    /// </summary>
+    public string? ConnectionString { get; set; }
+
     /// <summary>Chunks returned per search. Small on purpose: every chunk costs prompt tokens.</summary>
     public int TopK { get; set; } = 4;
 

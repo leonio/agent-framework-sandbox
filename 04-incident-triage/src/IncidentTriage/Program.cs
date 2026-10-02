@@ -61,11 +61,12 @@ ConsoleUi.Banner("Incident triage (Microsoft Agent Framework)", $"Model: {models
 // ingest executor. With a real provider this is where the embedding cost goes, see InMemoryVectorIndex
 // for caching and for swapping in a persistent vector database.
 using var embeddings = models.CreateEmbeddingGenerator();
-var index = new KnowledgeIndex(embeddings, triageOptions.Rag);
+await using var index = new KnowledgeIndex(embeddings, triageOptions.Rag);
+await index.InitializeAsync(ct);
 
 var runbookChunks = await index.IndexMarkdownFolderAsync(Path.Combine(prompts.KnowledgeFolder, "runbooks"), "runbook", ct);
 var postmortemChunks = await index.IndexMarkdownFolderAsync(Path.Combine(prompts.KnowledgeFolder, "postmortems"), "postmortem", ct);
-ConsoleUi.Info($"Knowledge indexed: {runbookChunks} runbook chunks, {postmortemChunks} postmortem chunks.");
+ConsoleUi.Info($"Knowledge indexed ({index.Describe()}): {runbookChunks} runbook chunks, {postmortemChunks} postmortem chunks.");
 
 // ---- Input ------------------------------------------------------------------------------------------
 var request = Intake.Collect(cli, Path.Combine(prompts.SampleDataFolder, "reports"), triageOptions.DefaultRef);

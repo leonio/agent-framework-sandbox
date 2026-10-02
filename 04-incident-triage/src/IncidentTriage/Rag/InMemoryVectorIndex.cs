@@ -22,14 +22,14 @@ namespace IncidentTriage.Rag;
 /// start), supports metadata filters and hybrid keyword + vector search, and is shared between instances.
 /// Docs: https://learn.microsoft.com/dotnet/ai/conceptual/vector-databases</para>
 /// </remarks>
-public sealed class InMemoryVectorIndex(IEmbeddingGenerator<string, Embedding<float>> embeddings)
+public sealed class InMemoryVectorIndex(IEmbeddingGenerator<string, Embedding<float>> embeddings) : IVectorIndex
 {
     private readonly List<(KnowledgeChunk Chunk, float[] Vector)> _items = [];
     private readonly Lock _gate = new();
 
     public int Count { get { lock (_gate) return _items.Count; } }
 
-    public void Clear() { lock (_gate) _items.Clear(); }
+    public Task ClearAsync(CancellationToken ct = default) { lock (_gate) _items.Clear(); return Task.CompletedTask; }
 
     public async Task AddAsync(IReadOnlyList<KnowledgeChunk> chunks, CancellationToken ct = default)
     {

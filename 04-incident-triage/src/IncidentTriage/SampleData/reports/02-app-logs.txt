@@ -1,0 +1,9 @@
+Log excerpt from checkout-api pod checkout-api-7d9f8-x2k4p, 2026-09-30
+2026-09-30T14:02:11Z INFO  Starting checkout-api 4.18.0 (commit 9f3c2ab)
+2026-09-30T14:09:47Z WARN  OrderRepository.SaveLineItemAsync slow: 4812 ms
+2026-09-30T14:11:02Z ERROR Unhandled exception in POST /api/checkout
+System.InvalidOperationException: Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.
+   at Microsoft.Data.SqlClient.ConnectionPool.WaitForPendingOpen()
+   at Checkout.Data.OrderRepository.SaveLineItemAsync(Int32 orderId, LineItem item, CancellationToken ct)
+   at Checkout.Data.OrderRepository.SaveOrderAsync(Order order, CancellationToken ct)
+2026-09-30T14:11:03Z ERROR POST /api/checkout responded 503 in 15004 ms

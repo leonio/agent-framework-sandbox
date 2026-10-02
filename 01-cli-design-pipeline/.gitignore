@@ -1,0 +1,5 @@
+# Generated apps, specs and merge-request notes from pipeline runs.
+output/
+bin/
+obj/
+*.user

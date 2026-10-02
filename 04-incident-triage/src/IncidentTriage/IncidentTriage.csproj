@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Console host for the incident-triage multi-agent workflow.
+    Target framework, language version and nullable settings come from ../../Directory.Build.props.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>IncidentTriage</RootNamespace>
+    <UserSecretsId>agent-framework-samples-04-incident-triage</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Agent Framework: AIAgent / ChatClientAgent, context providers (RAG, skills) and workflows. -->
+    <PackageReference Include="Microsoft.Agents.AI" />
+    <PackageReference Include="Microsoft.Agents.AI.Workflows" />
+    <PackageReference Include="Microsoft.Agents.AI.OpenAI" />
+    <!-- Microsoft.Extensions.AI: the provider-neutral IChatClient / IEmbeddingGenerator abstractions. -->
+    <PackageReference Include="Microsoft.Extensions.AI" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
+    <!-- Keyless (Entra ID) auth for Azure OpenAI. -->
+    <PackageReference Include="Azure.Identity" />
+    <!-- Referenced so the commented-out MCP example in Tools/McpObservabilityTools.cs compiles when enabled. -->
+    <PackageReference Include="ModelContextProtocol" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+  </ItemGroup>
+
+  <!--
+    Runtime-loaded content. WHY copy folders instead of embedding resources?
+    The point of the Prompts / Instructions / Skills / Knowledge folders is that a non-developer can
+    edit markdown and re-run without recompiling. Copying to the output keeps `dotnet run` working from
+    any directory; PromptLibrary also looks in the project folder first so edits apply instantly in dev.
+  -->
+  <ItemGroup>
+    <!-- SampleData/demo-repo holds C# files that play the part of "the repository under investigation".
+         They are data for the RAG index, not part of this program, so keep them out of compilation. -->
+    <Compile Remove="SampleData/**" />
+    <None Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Prompts/**/*;Instructions/**/*;Skills/**/*;Knowledge/**/*;SampleData/**/*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

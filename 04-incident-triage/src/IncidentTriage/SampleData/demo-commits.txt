@@ -1,0 +1,6 @@
+# Fake `git log --pretty="%h %ad %an: %s"` for the bundled demo repo (newest first)
+9f3c2ab 2026-09-30 dev-team: checkout-api: save order line items individually in OrderRepository for partial-failure handling
+4be17d0 2026-09-29 dev-team: search-api: nightly catalogue reindex job clears product cache before reload
+1c88e41 2026-09-28 dev-team: checkout-api: bump PaymentClient timeout to 10s
+7a20f9e 2026-09-25 dev-team: docs: update README with local setup
+e51d3c7 2026-09-22 dev-team: search-api: add ProductCache metrics

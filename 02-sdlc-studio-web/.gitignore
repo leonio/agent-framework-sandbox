@@ -1,0 +1,14 @@
+# Generated at runtime by the studio (specs, plans, generated code, git repos per workflow run)
+workspace/
+# Sqlite files when running with Database:Provider=Sqlite
+*.db
+*.db-shm
+*.db-wal
+# Front-end
+node_modules/
+src/SdlcStudio.Web/dist/
+# The production UI build is copied into the API's wwwroot (see README)
+src/SdlcStudio.Api/wwwroot/
+bin/
+obj/
+*.tsbuildinfo

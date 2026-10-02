@@ -1,0 +1,26 @@
+{
+  "toolCalls": [
+    { "name": "list_files", "arguments": { "directory": "src/Infrastructure/Payments" } }
+  ],
+  "response": {
+    "summary": "Adding a third provider would mean editing this switch; the existing keyed IPaymentGateway pattern already solves that.",
+    "findings": [
+      {
+        "title": "Provider switch bypasses IPaymentGateway",
+        "detail": "The switch on request.Provider hard-codes Stripe and PayPal calls. Infrastructure/Payments already defines IPaymentGateway with StripeGateway, registered as keyed services (guideline: Payment providers).",
+        "recommendation": "Resolve [FromKeyedServices] IPaymentGateway by provider name; add PayPalGateway as a new class.",
+        "severity": "Medium",
+        "filePath": "src/Api/Controllers/PaymentsController.cs",
+        "confidence": 0.85
+      },
+      {
+        "title": "Hard-coded PayPal sandbox URL",
+        "detail": "https://api-m.sandbox.paypal.com is in code, so production would silently hit the sandbox.",
+        "recommendation": "Move base URLs to configuration bound to the typed client.",
+        "severity": "Low",
+        "filePath": "src/Api/Controllers/PaymentsController.cs",
+        "confidence": 0.6
+      }
+    ]
+  }
+}

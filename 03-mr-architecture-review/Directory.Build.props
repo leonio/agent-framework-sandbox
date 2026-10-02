@@ -1,0 +1,49 @@
+<!--
+  Directory.Build.props
+  =====================
+  MSBuild imports this file automatically into every project below this folder, so the
+  sample's language/runtime settings live in exactly one place.
+
+  WHY a per-sample props file (rather than one at the repo root)?
+  The repository mixes many independent samples, each with its own csproj and pinned
+  versions. Keeping the props file inside 03-mr-architecture-review makes this sample
+  self-contained: you can copy the folder elsewhere and it still builds the same way.
+  Alternative: a repo-wide Directory.Build.props. Better for a product monorepo, worse for
+  a samples repo where each folder should be independently readable.
+-->
+<Project>
+  <PropertyGroup>
+    <!-- .NET 10 is the current LTS. C# 14 ships with it; we pin LangVersion explicitly so a
+         reader can see which language features the code relies on (extension members,
+         the `field` keyword, null-conditional assignment, ...). -->
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>14</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- "latest-recommended" turns on a sensible set of CA analyzers without drowning a
+         sample in noise. Alternative: `latest-all` + an .editorconfig to tune severities. -->
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <!-- Invariant culture everywhere: numbers in prompts and stored JSON/Markdown look the same on every
+         machine ("0.95", never "0,95"). Text sent to a model is data, not UI, so it should not be localised. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+
+    <!--
+      Suppressed warnings, and why:
+      CA1812 - executors/records are created via DI or reflection-like factories; the analyzer
+               cannot see that and flags them as "never instantiated".
+      CA2007 - ConfigureAwait(false) is noise in an app (not a library) with no sync context.
+      CA1848/CA1873 - LoggerMessage source generators are the high-perf choice, but plain
+               ILogger calls are easier to read in a teaching sample.
+      CA1303 - literal strings passed to Console are fine; this sample is not localised.
+      CA1305 - "specify IFormatProvider": redundant with InvariantGlobalization above.
+      CA1515 - "make public types internal": in an exe it is true, but public types keep the
+               test project simple (no InternalsVisibleTo needed).
+      MEAI001/MAAI001/OPENAI001 - "experimental API" diagnostics from Microsoft.Extensions.AI,
+               the Agent Framework and the OpenAI SDK. We opt in knowingly.
+    -->
+    <NoWarn>$(NoWarn);CA1812;CA2007;CA1848;CA1873;CA1303;CA1305;CA1515;MEAI001;MAAI001;OPENAI001</NoWarn>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,3 @@
+/* Tailwind v4: one import, configured in CSS. The typography plugin styles rendered markdown (.prose). */
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";

@@ -1,0 +1,30 @@
+<!--
+  Central Package Management (CPM) for this sample.
+  WHY: one place to bump the Agent Framework / Microsoft.Extensions.AI versions, which move together.
+  Docs: https://learn.microsoft.com/nuget/consume-packages/central-package-management
+
+  Version notes:
+  - Microsoft.Agents.AI* 1.23.0 is the GA line of Microsoft Agent Framework for .NET. Older samples in
+    the Agent-Framework-Samples repo reference the framework via ProjectReference or 1.0.0-preview builds; the API used here
+    (AIAgent.RunAsync<T>, AgentSession, AIContextProvider, WorkflowBuilder/RequestPort) is the 1.x shape.
+  - Microsoft.Extensions.AI 10.10.x is what Agent Framework 1.23 is compiled against. Keep them aligned.
+  - No vector database package: the RAG index is a small in-memory cosine index (Rag/InMemoryVectorIndex.cs
+    explains why, and how to move to Microsoft.Extensions.VectorData connectors such as Azure AI Search).
+-->
+<Project>
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Agents.AI" Version="1.23.0" />
+    <PackageVersion Include="Microsoft.Agents.AI.Workflows" Version="1.23.0" />
+    <PackageVersion Include="Microsoft.Agents.AI.OpenAI" Version="1.23.0" />
+    <PackageVersion Include="Microsoft.Extensions.AI" Version="10.10.0" />
+    <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="10.10.1" />
+    <PackageVersion Include="Azure.Identity" Version="1.21.0" />
+    <PackageVersion Include="ModelContextProtocol" Version="2.2.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.CommandLine" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.12" />
+  </ItemGroup>
+</Project>

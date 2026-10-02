@@ -1,0 +1,5 @@
+bin/
+obj/
+# Local review history (findings + your accept/reject decisions) and PR clones.
+.review-data/
+.work/

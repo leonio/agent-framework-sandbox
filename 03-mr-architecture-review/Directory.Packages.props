@@ -1,0 +1,44 @@
+<!--
+  Central Package Management (CPM)
+  ================================
+  Every package version for this sample is declared once, here. Project files then use
+  <PackageReference Include="X" /> with no Version attribute.
+
+  WHY: the Agent Framework, Microsoft.Extensions.AI and the OpenAI SDK move quickly and must
+  be kept in lock-step (Microsoft.Agents.AI 1.23.x is built against Microsoft.Extensions.AI
+  10.10.x). One file makes "bump everything together" a single diff.
+  Alternative: versions inline in each csproj (what the older samples in the Agent-Framework-Samples repo do).
+  Fine for one project, error-prone once a test project is added.
+  Docs: https://learn.microsoft.com/nuget/consume-packages/central-package-management
+-->
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Microsoft Agent Framework: agents (ChatClientAgent, AIContextProvider, ...) and the
+         graph-based workflow engine (executors, edges, fan-out/fan-in, request ports). -->
+    <PackageVersion Include="Microsoft.Agents.AI" Version="1.23.0" />
+    <PackageVersion Include="Microsoft.Agents.AI.Workflows" Version="1.23.0" />
+
+    <!-- Microsoft.Extensions.AI: the provider-neutral IChatClient abstraction the agents sit on.
+         The .OpenAI package adapts the official OpenAI SDK (which also talks to Azure OpenAI's
+         /openai/v1 endpoint and GitHub Models) to IChatClient. -->
+    <PackageVersion Include="Microsoft.Extensions.AI" Version="10.10.0" />
+    <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="10.10.1" />
+
+    <!-- Generic host: configuration (appsettings + user-secrets + env vars + command line),
+         dependency injection, logging and HttpClientFactory in one place. -->
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.12" />
+
+    <!-- Model Context Protocol client. Referenced so the commented-out MCP example in
+         Integrations/GitHubMcpTools.cs compiles the moment you uncomment it. -->
+    <PackageVersion Include="ModelContextProtocol" Version="2.2.0" />
+
+    <!-- Tests -->
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+  </ItemGroup>
+</Project>

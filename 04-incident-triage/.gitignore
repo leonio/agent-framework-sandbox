@@ -1,0 +1,7 @@
+# Run artefacts and cloned repositories
+**/output/
+**/.work/
+# Build output (this sample originally relied on the parent repo's .gitignore for these)
+bin/
+obj/
+*.user

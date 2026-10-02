@@ -1,0 +1,35 @@
+{
+  "toolCalls": [
+    { "name": "search_code", "arguments": { "text": "IPaymentGateway" } },
+    { "name": "read_file", "arguments": { "path": "src/Application/Orders/OrderService.cs" } }
+  ],
+  "response": {
+    "summary": "The endpoint works but puts data access, provider HTTP calls and business rules in the controller, bypassing the existing Application/Infrastructure layers.",
+    "findings": [
+      {
+        "title": "Controller does data access and payment orchestration",
+        "detail": "PaymentsController opens a SqlConnection, reads and updates Orders and calls providers directly. OrderService.MarkPaidAsync and IPaymentGateway already exist for this, so the change duplicates logic in the wrong layer (guideline: Controllers stay thin).",
+        "recommendation": "Inject OrderService and a keyed IPaymentGateway; keep the controller to request mapping and status codes.",
+        "severity": "Medium",
+        "filePath": "src/Api/Controllers/PaymentsController.cs",
+        "confidence": 0.85
+      },
+      {
+        "title": "New HttpClient created per request",
+        "detail": "`var http = new HttpClient();` inside the action causes socket exhaustion under load and ignores DNS changes (guideline: HTTP clients).",
+        "recommendation": "Use a typed client from IHttpClientFactory (StripeGateway already does).",
+        "severity": "Medium",
+        "filePath": "src/Api/Controllers/PaymentsController.cs",
+        "confidence": 0.9
+      },
+      {
+        "title": "No test seam for payment flow",
+        "detail": "All logic is in one action with concrete SqlConnection/HttpClient, so the paid/failed paths cannot be unit tested.",
+        "recommendation": "Resolves itself once the logic moves behind OrderService and IPaymentGateway.",
+        "severity": "Low",
+        "filePath": "src/Api/Controllers/PaymentsController.cs",
+        "confidence": 0.45
+      }
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+<!--
+  Shared build settings for every project in this sample.
+
+  WHY a Directory.Build.props per sample (rather than one at the repo root)?
+  The repo hosts many independent samples; keeping the props here makes this
+  folder self-contained so you can copy it out and it still builds.
+-->
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!--
+      C# 14 is the default for net10.0, but we pin it so the intent is explicit.
+      Features used in this sample: extension members (extension blocks with
+      properties), the `field` keyword, null-conditional assignment, collection
+      expressions, primary constructors and required members.
+    -->
+    <LangVersion>14</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- Agent Framework marks a few APIs as experimental (MAAI001 etc). We opt in deliberately. -->
+    <NoWarn>$(NoWarn);MEAI001;MAAI001;OPENAI001;CS1591</NoWarn>
+  </PropertyGroup>
+</Project>

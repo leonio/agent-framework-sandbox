@@ -1,0 +1,5 @@
+Zendesk ticket #88231 (priority: urgent), received 2026-09-30T14:20:00Z
+From: customer support (tier 1)
+Subject: Customers cannot complete payment at checkout
+
+Since about 14:15 UTC multiple customers report the checkout page spinning for a long time and then showing "Something went wrong, your payment failed". At least 40 tickets in 15 minutes. Some customers ask whether they were charged. Affected: web and mobile. Endpoint seen in HAR files: POST /api/checkout -> 503 (checkout-api).

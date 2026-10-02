@@ -1,0 +1,29 @@
+<Project>
+  <!--
+    Central Package Management (CPM): every version lives here, projects only
+    say *which* packages they use. With one project it looks like overkill, but
+    samples get copied and grown; CPM stops the "three projects, three versions
+    of Microsoft.Extensions.AI" drift that the older samples in the Agent-Framework-Samples repo show.
+
+    Package choice notes:
+      * Microsoft.Agents.AI.OpenAI pulls in Microsoft.Agents.AI (agents),
+        Microsoft.Extensions.AI (IChatClient abstraction + middleware) and the
+        OpenAI SDK. The OpenAI SDK talks to OpenAI, Azure OpenAI (v1 endpoint),
+        GitHub Models and Foundry Local because they all speak the same wire
+        protocol, so we do not need Azure.AI.OpenAI at all.
+        Alternative: Microsoft.Agents.AI.AzureAI / Foundry packages if you
+        want server-side (persistent) agents instead of client-side ones.
+      * Microsoft.Agents.AI.Workflows is the graph/executor runtime.
+      * Microsoft.Extensions.Hosting gives us DI + configuration + logging +
+        user-secrets in one call (Host.CreateApplicationBuilder).
+      * ModelContextProtocol is only referenced when you build with
+        -p:EnableMcp=true (see CliDesignPipeline.csproj).
+  -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Agents.AI.OpenAI" Version="1.23.0" />
+    <PackageVersion Include="Microsoft.Agents.AI.Workflows" Version="1.23.0" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.12" />
+    <PackageVersion Include="ModelContextProtocol" Version="2.2.0" />
+  </ItemGroup>
+</Project>

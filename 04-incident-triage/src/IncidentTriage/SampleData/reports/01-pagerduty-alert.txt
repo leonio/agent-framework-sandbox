@@ -1,0 +1,5 @@
+[PagerDuty] TRIGGERED: checkout-api HTTP 5xx rate above 5% (current 18.4%)
+Service: checkout-api (prod-eu)
+Started: 2026-09-30T14:11:00Z
+Details: POST /api/checkout returning 503 Service Unavailable. p99 latency 15.2s (SLO 1.2s).
+Runbook: db-connection-pool-exhaustion

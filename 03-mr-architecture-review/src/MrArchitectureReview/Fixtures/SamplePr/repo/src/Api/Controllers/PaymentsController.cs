@@ -1,0 +1,48 @@
+using System.Net.Http.Json;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+
+namespace Contoso.Shop.Api.Controllers;
+
+[ApiController]
+[Route("api/payments")]
+public class PaymentsController(IConfiguration config, ILogger<PaymentsController> logger) : ControllerBase
+{
+    [HttpPost]
+    public async Task<IActionResult> Pay(PaymentRequest request)
+    {
+        logger.LogInformation("Taking payment for order {OrderId} with card {Card}", request.OrderId, request.CardNumber);
+
+        using var connection = new SqlConnection(config.GetConnectionString("Shop"));
+        await connection.OpenAsync();
+        var cmd = new SqlCommand($"SELECT Total FROM Orders WHERE Id = '{request.OrderId}'", connection);
+        var total = (decimal)(await cmd.ExecuteScalarAsync())!;
+
+        var http = new HttpClient();
+        HttpResponseMessage response;
+        switch (request.Provider)
+        {
+            case "stripe":
+                http.DefaultRequestHeaders.Add("Authorization", $"Bearer {config["StripeSecretKey"]}");
+                response = await http.PostAsJsonAsync("https://api.stripe.com/v1/charges",
+                    new { amount = (int)(total * 100), currency = "gbp", source = request.CardToken });
+                break;
+            case "paypal":
+                response = await http.PostAsJsonAsync("https://api-m.sandbox.paypal.com/v2/checkout/orders",
+                    new { intent = "CAPTURE", purchase_units = new[] { new { amount = new { currency_code = "GBP", value = total } } } });
+                break;
+            default:
+                return BadRequest("Unknown provider");
+        }
+
+        if (!response.IsSuccessStatusCode)
+            return StatusCode(502, await response.Content.ReadAsStringAsync());
+
+        var update = new SqlCommand($"UPDATE Orders SET Status = 'Paid' WHERE Id = '{request.OrderId}'", connection);
+        await update.ExecuteNonQueryAsync();
+
+        return Ok();
+    }
+}
+
+public record PaymentRequest(string OrderId, string Provider, string CardNumber, string CardToken);

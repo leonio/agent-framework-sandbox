@@ -1,0 +1,10 @@
+<!-- .slnx is the XML solution format that is the default from the .NET 10 SDK onwards.
+     It is diff-friendly (no GUIDs). Visual Studio 17.14+, Rider and `dotnet` all read it. -->
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MrArchitectureReview/MrArchitectureReview.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MrArchitectureReview.Tests/MrArchitectureReview.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,17 @@
+<!--
+  .slnx is the XML solution format that became the default in the .NET 10 SDK
+  (`dotnet new sln` now emits it). It is far easier to diff and merge than the
+  classic .sln GUID soup. Visual Studio 17.13+, Rider 2024.3+ and the C# Dev Kit
+  all open it. If you need the legacy format: `dotnet sln migrate` works the
+  other way round only, so keep a .sln next to it in that case.
+-->
+<Solution>
+  <Folder Name="/content/">
+    <File Path="prompts/interviewer.md" />
+    <File Path="prompts/developer.md" />
+    <File Path="prompts/tester.md" />
+    <File Path="prompts/merge-request.md" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="src/CliDesignPipeline/CliDesignPipeline.csproj" />
+</Solution>

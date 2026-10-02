@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>MrArchitectureReview</RootNamespace>
+    <!-- Keeps keys out of source control: `dotnet user-secrets set "Ai:ApiKey" "..."` -->
+    <UserSecretsId>mr-architecture-review-sample</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Agents.AI" />
+    <PackageReference Include="Microsoft.Agents.AI.Workflows" />
+    <PackageReference Include="Microsoft.Extensions.AI" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="ModelContextProtocol" />
+  </ItemGroup>
+
+  <!--
+    Prompts, knowledge, mock responses and the sample PR are plain files copied next to the
+    binary. WHY files rather than C# string constants? Prompts are the part of an agent that
+    changes most often and are reviewed by people who do not write C#. Keeping them as
+    Markdown lets a reviewer diff "what we told the model" separately from "what the code does",
+    and lets the app record a hash of the exact prompt used for each review (see PromptLibrary).
+    Alternative: embedded resources (tamper-proof, single-file deploy) or a prompt store in a
+    database (editable at runtime - that is what sample 02's admin area does).
+  -->
+  <ItemGroup>
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Prompts\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Knowledge\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="MockResponses\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Fixtures\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- The fixture repo contains .cs files that belong to the *sample PR*, not to this app. -->
+  <ItemGroup>
+    <Compile Remove="Fixtures\**" />
+  </ItemGroup>
+
+</Project>

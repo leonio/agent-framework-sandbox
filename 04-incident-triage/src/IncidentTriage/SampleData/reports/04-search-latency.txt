@@ -1,0 +1,4 @@
+[Grafana alert] search-api p99 latency high
+Fired: 2026-09-30T13:58:20Z
+search-api p99 latency 2.9s (threshold 800ms) for 10 minutes. ProductCache hit ratio 0.08 (normally 0.93). Elasticsearch CPU 92%.
+No errors, requests are slow. Started shortly after the nightly catalogue reindex.

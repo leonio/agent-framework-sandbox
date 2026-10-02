@@ -1,0 +1,28 @@
+<!--
+  Directory.Build.props for the 04-incident-triage sample.
+
+  WHY a per-sample props file (and not one at the repo root)?
+  Each sample in this repository is deliberately self-contained so a reader can copy
+  one folder out of the repo and it still builds. MSBuild walks *up* the directory tree and imports
+  the first Directory.Build.props it finds, so putting this file here stops this sample inheriting
+  settings from a sibling or parent (and stops us leaking ours into them).
+  Docs: https://learn.microsoft.com/visualstudio/msbuild/customize-by-directory
+-->
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- C# 14 is the default for net10.0; pinned explicitly so the intent survives SDK upgrades.
+         Newer features used in this sample: C# 14 extension members (extension blocks) and the `field`
+         keyword; C# 12/13 primary constructors, collection expressions, params spans and System.Threading.Lock. -->
+    <LangVersion>14.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Treat warnings as errors so the sample stays clean as packages move. The NoWarn list is
+         intentionally tiny and every entry is justified where the warning would fire. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Central Package Management: versions live in Directory.Packages.props. -->
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <!-- Invariant globalization keeps the console app small and avoids ICU on Linux containers. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+</Project>

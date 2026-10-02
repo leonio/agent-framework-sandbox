@@ -1,0 +1,32 @@
+<Project>
+  <!--
+    Directory.Build.props is imported by every project below this folder.
+    The sample keeps its OWN copy (rather than relying on anything higher up in
+    the repo) so it can be copied out and built on its own.
+
+    Why these settings:
+      * net10.0 / LangVersion 14  - the brief is "modern C#". C# 14 ships with
+        .NET 10 and gives us extension members, the `field` keyword,
+        null-conditional assignment and implicit span conversions, all of
+        which are used (and called out) in the code.
+      * Nullable + TreatWarningsAsErrors - agent code is full of "the model
+        might not have returned that" situations. Making nullability errors
+        fatal forces each of those to be handled explicitly.
+      * ImplicitUsings - keeps files focused on the interesting namespaces.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>14</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!--
+      MEAI001 / MAAI001 style diagnostics flag APIs that are still marked
+      [Experimental] in Microsoft.Extensions.AI / Agent Framework. We opt in
+      deliberately (this is a sample of the newest surface), but keep the list
+      explicit so it is obvious what would need revisiting on upgrade.
+    -->
+    <NoWarn>$(NoWarn);MEAI001;MAAI001;OPENAI001</NoWarn>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>

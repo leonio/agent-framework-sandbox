@@ -162,8 +162,8 @@ Commit after each numbered step and push. Build after every file group.
      `TextReasoningContent` and usage. `ChatAsync`: streaming, accumulate text, call `OnPartial`. Do **not** rely on
      `RunAsync<T>`: it exists only on `ChatClientAgent` and decorators hide it.
    - `AddRosterAgentRuntime()` in DI (runner scoped; it depends on scoped platform services).
-2. **Platform** (`Roster.Platform`: EF Core 10 + Npgsql 10.0.3 + Identity)
-   - Entities: `AppUser` (display name, title), `UserCredential` (kind `api-key` | `github-token`, masked hint, ciphertext),
+2. **Platform** (`Roster.Platform`: EF Core 10 + Npgsql 10.0.3; no ASP.NET Core Identity, Keycloak owns accounts)
+   - Entities: `AppUser` (**id = Keycloak `sub`**, display name and email refreshed from the claims at each sign-in, title), `UserCredential` (kind `api-key` | `github-token`, masked hint, ciphertext),
      `ModelEndpoint` (owner or shared, kind, base URL, default model, tier-to-model map, capabilities, limits, credential
      id), `Assignment`, `Phase`, `Job`, `RunEvent`, `Invocation` (the ledger), `Finding`, `RetroSession`, `RetroMessage`,
      `RetroCard`, `AgentVersion`. JSON in `jsonb` string columns.
@@ -181,19 +181,27 @@ Commit after each numbered step and push. Build after every file group.
 3. **Migrator** (`Roster.Migrator`): apply migrations, seed a shared `fake` endpoint, exit.
 4. **Runner** (`Roster.Runner`): `BackgroundService` claim loop with heartbeat; handlers `phase.run` and `retro.turn`; config
    `Runner:Pool`, `Runner:Placement` (`InProcess` or `Pool`), `Runner:Concurrency`, `Runner:WorkerId`.
-5. **API** (`Roster.Api`): Identity cookie auth with custom register/login/logout/me endpoints (first account is `admin`,
-   registration can be switched off, `X-Roster` header required on unsafe requests), endpoints and credentials CRUD
+5. **API** (`Roster.Api`): sign-in is **done** (Keycloak, see design doc section 10). Still to do: create or refresh the
+   `AppUser` row on sign-in (the OIDC `OnTokenValidated` event, or the first authenticated request), add `title` to
+   `/api/auth/me` and a `PUT /api/me/profile` for it, then endpoints and credentials CRUD
    (write-only keys), agent catalogue with versions and scorecards, assignments (create, list, get, cancel, finding
    decisions with reasons), SSE per assignment, retro (get or start, post message, confirm cards), OpenAPI document.
-6. **ServiceDefaults and AppHost**: `Aspire.AppHost.Sdk` 13.6.0. Postgres, `migrator` (others `WaitForCompletion` it), `api`,
-   `runner` with `WithReplicas(2)`, `AddViteApp("web")`, a generated secret parameter `vault-key`. Compile-check only here.
+6. **AppHost, the rest**: ServiceDefaults and the AppHost with Keycloak and `api` exist. Add Postgres (data volume) and
+   the `roster` database, `migrator` (others `WaitForCompletion` it), `runner` with `WithReplicas(2)` (no Keycloak
+   reference; it never signs anyone in), `AddViteApp("web")` **on port 5173** (the realm's redirect URIs name it), and
+   a generated, persisted secret parameter `vault-key`. This can be **run** here (section 3), not just compiled.
 7. **Web** (`Roster.Web`): Vite 8, React 19.3, Tailwind 4.3 (`@tailwindcss/vite`), TypeScript 7, React Router 8.4, TanStack
    Query. Pages: sign in or register; assignments list; new assignment (scenario, endpoint picker, optional advanced
    overrides); assignment (stepper, live events over SSE, findings triage with reasons, **Retro tab as a chat** with
    editable draft cards, ledger view); agent catalogue with scorecards; settings (profile with title, endpoints,
    credentials). The SSE "something changed, refetch" pattern from sample 02's `useLiveData` still fits.
-8. **Verify locally**: apt Postgres, run migrator, api and runner against `ConnectionStrings__roster` and `Vault__Key`; with
-   curl: register, create an assignment on the fixture, wait for the review, decide findings, open a retro, chat, "wrap up",
+   Sign-in from the web app: on load call `/api/auth/me`; a 401 shows the sign-in page, whose buttons are plain links to
+   `/api/auth/login?returnUrl=...` and `/api/auth/register?returnUrl=...`. Sign out is a `<form method="post"
+   action="/api/auth/logout">`. Every `fetch` that changes state sends `X-Roster: 1`. The Vite dev proxy forwards
+   `/api` to the API and must **keep the browser's Host header** (`changeOrigin: false`, the default), so the API builds
+   its redirect URI on the web app's origin and the cookie lands there.
+8. **Verify locally** with the AppHost under Docker (section 3). Sign in through the browser (Playwright; curl cannot do
+   the Keycloak form easily), then: create an assignment on the fixture, wait for the review, decide findings, open a retro, chat, "wrap up",
    confirm cards, read scorecards. Build the web app and screenshot it with Playwright. Fix what breaks.
 9. Update the README status table, the design doc's "Verified facts" and "Risks" with what was and was not exercised.
 
@@ -217,5 +225,6 @@ and the doc says plainly what was run and what was only compiled.
 ## 7. Prompt to start the next session
 
 > Read `05-agent-platform/docs/HANDOFF.md` and `05-agent-platform/docs/architecture.md` on branch
-> `claude/modest-lamport-rm5j2v`, then continue Roster slice 1 from step 1 of section 5. Small commits, push as you go, no
-> PRs, no tests. Install the .NET 10 SDK first (`apt-get install -y dotnet-sdk-10.0`).
+> `claude/modest-lamport-rm5j2v`, then continue Roster slice 1 from step 1 of section 5. Many small commits, push as you
+> go, plenty of comments, no PRs, no tests. Install the .NET 10 SDK first (`apt-get update && apt-get install -y
+> dotnet-sdk-10.0`) and start Docker (`dockerd`) as section 3 describes.

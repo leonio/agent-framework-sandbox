@@ -5,11 +5,12 @@ import { api } from '../api/client';
 import { useAssignment, useLiveEvents } from '../api/queries';
 import { useMe } from '../auth';
 import { FindingsTriage } from '../components/FindingsTriage';
+import { LedgerView } from '../components/LedgerView';
 import { PhaseStepper } from '../components/PhaseStepper';
 import { AssignmentStateBadge, OutcomeBadge } from '../components/status';
 import { Button, Card, ErrorNote, Spinner, timeAgo } from '../components/ui';
 
-type Tab = 'findings';
+type Tab = 'findings' | 'ledger';
 
 /**
  * One assignment, live: its phases, what each reviewer is doing, the findings to triage, and the ledger of every
@@ -42,6 +43,7 @@ export function AssignmentPage() {
 
   const tabs: [Tab, string][] = [
     ['findings', `Findings${undecided > 0 ? ` (${undecided} to decide)` : ''}`],
+    ['ledger', `Ledger (${d.steps.length})`],
   ];
 
   return (
@@ -96,6 +98,7 @@ export function AssignmentPage() {
       </div>
 
       {tab === 'findings' && <FindingsTriage detail={d} canDecide={owner} />}
+      {tab === 'ledger' && <LedgerView assignmentId={id} steps={d.steps} />}
     </div>
   );
 }

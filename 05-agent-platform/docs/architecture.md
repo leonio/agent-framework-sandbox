@@ -418,7 +418,10 @@ Aspire facts come from the `microsoft/aspire.dev` docs source and Copilot facts 
 
 - **Only partly run end to end.** The second session found Docker usable in the sandbox and ran the AppHost: Keycloak
   imported the realm, and a browser signed in as the seeded admin and as a newly registered member, signed out (ending
-  the Keycloak session) and was refused an open redirect. Everything else in the topology is still to be run.
+  the Keycloak session) and was refused an open redirect. The agent runtime was smoke-run against the fake endpoint
+  (reviewers in parallel, repair, prompted output, placement refusal, concurrency gate, a full retro conversation with
+  tools). The `openai` endpoint kind is compiled but has not met a real model: the sandbox cannot reach one. Everything
+  else in the topology is still to be run.
 - **Keycloak integration is preview.** Its API may change between Aspire releases. The surface used is small:
   `AddKeycloak`, `WithDataVolume`, `WithRealmImport`, `AddKeycloakOpenIdConnect`.
 - **Copilot specifics.** The SDK's structured output is experimental, and the runtime download happens at build time.

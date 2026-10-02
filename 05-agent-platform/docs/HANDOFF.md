@@ -1,7 +1,7 @@
 # Handoff: Roster slice 1
 
-Written at the end of the first working session (2 Oct 2026) and updated in the second (same day, Keycloak) so a fresh
-session, human or AI, can continue without the conversation. Read [`architecture.md`](architecture.md) for the design. This file is the status, the decisions made
+Written at the end of the first working session (2 Oct 2026) and updated through the second (same day: Keycloak, then
+the rest of slice 1 up to the web app) so a fresh session, human or AI, can continue without the conversation. Read [`architecture.md`](architecture.md) for the design. This file is the status, the decisions made
 since, the environment notes, and an ordered plan for what is left.
 
 ## 0. Ground rules from the owner
@@ -33,10 +33,10 @@ since, the environment notes, and an ordered plan for what is left.
 | `Roster.Agents.Runtime` remainder: `PromptRenderer`, `ContractSchemas`, `StructuredOutput`, `EndpointGates`, `ChatClientFactory`, the fake endpoint, `AgentRunner` (typed + chat), `AddRosterAgentRuntime` | Done, **smoke-run with the fake endpoint** (below); the `openai` kind is compiled only |
 | `Roster.ServiceDefaults` | Done (template-shaped) |
 | `Roster.Api`: Keycloak sign-in, profile, credentials, endpoints, agents and scorecards, assignments and triage, SSE, retro, OpenAPI | Done, **run under Aspire and driven through a signed-in browser** |
-| `Roster.AppHost`: Keycloak, Postgres, migrator, two runner replicas, api, generated secrets including `vault-key` | Done, **run under Docker** |
+| `Roster.AppHost`: Keycloak, Postgres, migrator, two runner replicas, api, the web app on 5173, generated secrets including `vault-key` | Done, **run under Docker** |
 | `Roster.Migrator` (migrate and seed) and `Roster.Runner` (claim loops with heartbeats) | Done, **run** (standalone and under Aspire; runner crash-tested) |
 | `Roster.Platform`: EF Core entities and migration, vault, model router, ledger, job queue, event bus and stream, PR sources, tools, scenario engine, PR-review scenario, triage, retro, scorecards, job dispatcher, `AddRosterPlatform` | Done, **smoke-run against Postgres 17 in Docker** (below); the GitHub PR source is compiled only |
-| Web app (`Roster.Web`) and its place in the AppHost | **Not started** (plan in section 5, step 7) |
+| `Roster.Web`: sign-in, assignments with the live stepper and triage, the retro chat with cards, the ledger, the agent catalogue with scorecards, settings | Done, **walked through end to end in a browser** (below); production build passes |
 
 The sign-in slice has been run end to end in the sandbox (section 3 says how): Keycloak imported the realm; Playwright
 signed in as the seeded admin (`roles: [member, admin]`) and as a newly registered person (`roles: [member]`), signed out
@@ -92,6 +92,19 @@ The hosts have been run too:
   while the facilitator is answering; drafts; a card confirmed as "Roster Admin · Security Engineer"), scorecards.
   A newly registered member got 403 on the admin's assignment, 404 on their retro, 403 creating a shared endpoint,
   400 using the admin's endpoint, 400 without `X-Roster`, and could cancel their own assignment.
+- **The web app, through a browser**: Playwright used the UI on `http://localhost:5173` the way a person would, under
+  Aspire with the fake endpoint. The admin signed in through Keycloak from the sign-in page, set a title in settings (the
+  top bar changed), added a key (listed as `sk-…WXYZ`, the field cleared) and a shared endpoint on `fake-slow`, and
+  started an assignment on it from the endpoint picker. The stepper showed review running with all three reviewers live,
+  then 8 findings to triage. One was rejected with a reason and shown as "Rejected by Roster Admin · Principal Engineer:
+  “…”", the rest accepted, and the assignment completed. The ledger showed one row per model call with the fenced
+  input, the output and the reasoning. The retro tab opened the facilitator, took two answers and "Wrap up", and showed
+  two drafts; one was edited and confirmed ("drafted with the facilitator"), the other discarded. The agent pages showed
+  the scorecards, the acceptance meter and the breakdown by title. A person who registered from the sign-in page was
+  nudged to add a title, was told "This assignment belongs to someone else." on the admin's assignment, saw shared
+  endpoints without delete buttons and no "shared" option, and signed out back to the sign-in page. Dark mode was
+  looked at too. Things the walkthrough fixed: 4xx answers were retried for seven seconds before the error showed, and
+  three layout problems (a truncated select, agent names cut short on cards, doubly wrapped instructions).
 
 Nothing has touched a real model yet. The Ollama and Hugging Face registries are blocked here, so the `openai`
 endpoint kind has not been run against anything, and the GitHub API only reaches repositories attached to the session,
@@ -148,6 +161,9 @@ These came from the owner in conversation. The design doc already reflects most 
   Do the same for Postgres (`mirror.gcr.io/library/postgres:<tag Aspire wants>`) when it joins. This is a sandbox
   workaround only; nothing in the repo refers to the mirror.
 - **Running the AppHost:** `cd src/Roster.AppHost && nohup dotnet run --launch-profile http > <scratchpad>/apphost.log 2>&1 &`.
+  The web app is on `http://localhost:5173` once `curl --noproxy '*' http://localhost:5173/api/auth/me` answers 401
+  (Vite is up and proxying to the API). Aspire runs `npm install` for it first, so a fresh container needs nothing
+  more. Vite reloads edited files, so UI changes need no restart.
   With `AspireUseCliBundle=true`, `dotnet run` fetches the Aspire CLI through `dnx` (works through the proxy) and the CLI
   runs the app. Its console output is a TUI, so read state with
   `~/.nuget/packages/aspire.cli.linux-x64/13.6.0/tools/net10.0/linux-x64/aspire describe --format Json --non-interactive --apphost Roster.AppHost.csproj < /dev/null`
@@ -179,7 +195,7 @@ These came from the owner in conversation. The design doc already reflects most 
 
 ```
 05-agent-platform/
-  Roster.slnx                       6 projects so far
+  Roster.slnx                       9 .NET projects (the web app is an npm project beside them)
   Directory.Packages.props          central versions, all verified latest stable on 2 Oct 2026
   src/
     Roster.Agents.Abstractions/     manifest, capability catalog + risk classes, placement policy, contracts,
@@ -196,8 +212,13 @@ These came from the owner in conversation. The design doc already reflects most 
                                     tools, propose_cards, CapabilityBinder), Scenarios/ (ScenarioEngine, PrReviewScenario,
                                     FindingDecisions), Retro/ (RetroService, ScorecardService), PlatformHostingExtensions
     Roster.ServiceDefaults/         Aspire service defaults (OTel, health, service discovery, resilience)
-    Roster.Api/                     Program.cs, Auth/RosterAuth.cs (cookie + Keycloak OIDC, auth endpoints, X-Roster check)
-    Roster.AppHost/                 AppHost.cs (Keycloak + api), Realms/roster-realm.json + README.md
+    Roster.Migrator/                migrates and seeds, then exits
+    Roster.Runner/                  RunnerService: claim loops, heartbeats, drain on shutdown
+    Roster.Api/                     Program.cs, Auth/ (cookie + Keycloak OIDC, auth endpoints, X-Roster check, CurrentUser),
+                                    Http/PlatformExceptionHandler, Endpoints/ (profile, credentials, endpoints, agents,
+                                    assignments, events, retro)
+    Roster.AppHost/                 AppHost.cs (Keycloak, Postgres, migrator, runners, api, web), Realms/roster-realm.json + README.md
+    Roster.Web/                     Vite + React app: src/api, src/auth.tsx, src/components (settings/), src/pages
   docs/architecture.md, docs/HANDOFF.md
 spikes/a2a-agent-fleet/             standalone spike, own solution, `./run-spike.sh`
 ```
@@ -263,10 +284,12 @@ Commit after each numbered step and push. Build after every file group.
    - `/openapi/v1.json` in Development, anonymous (23 paths). Generate the web app's types from it.
    Errors are problem details: 400 bad input, 403 not yours, 404 not found, 409 conflict (`ConflictException`).
    Enums are camelCase strings (`awaitingTriage`, `rejected`, `good`).
-6. **AppHost, the rest**: everything but the web app is in and runs. Left for step 7: `AddViteApp("web")` **on port
-   5173** (the realm's redirect URIs name it), referencing the api.
-7. **Web** (`Roster.Web`): Vite 8, React 19.3, Tailwind 4.3 (`@tailwindcss/vite`), TypeScript 7, React Router 8.4, TanStack
-   Query. Pages: sign in or register; assignments list; new assignment (scenario, endpoint picker, optional advanced
+6. ~~**AppHost, the rest**~~ **Done**: `AddViteApp("web")` on port 5173 (the realm's redirect URIs name it),
+   referencing the api.
+7. ~~**Web**~~ **Done** (`Roster.Web`): Vite 8, React 19.3, Tailwind 4.3 (`@tailwindcss/vite`), TypeScript 7, React
+   Router 8.4, TanStack Query. Where things are: `src/api/` (the fetch wrapper, hand-written types, query hooks and the
+   live-events hook), `src/auth.tsx` (the sign-in gate), `src/components/` (the UI kit, stepper, triage, retro,
+   ledger, scorecard, `settings/`), `src/pages/`. `npm run build` typechecks and builds. What was planned: Pages: sign in or register; assignments list; new assignment (scenario, endpoint picker, optional advanced
    overrides); assignment (stepper, live events over SSE, findings triage with reasons, **Retro tab as a chat** with
    editable draft cards, ledger view); agent catalogue with scorecards; settings (profile with title, endpoints,
    credentials). The SSE "something changed, refetch" pattern from sample 02's `useLiveData` still fits.
@@ -275,14 +298,17 @@ Commit after each numbered step and push. Build after every file group.
    action="/api/auth/logout">`. Every `fetch` that changes state sends `X-Roster: 1`. The Vite dev proxy forwards
    `/api` to the API and must **keep the browser's Host header** (`changeOrigin: false`, the default), so the API builds
    its redirect URI on the web app's origin and the cookie lands there.
-8. **Verify locally** with the AppHost under Docker (section 3). Sign in through the browser (Playwright; curl cannot do
+8. ~~**Verify locally**~~ **Done** (section 1, "The web app, through a browser"). The plan was: with the AppHost under Docker (section 3). Sign in through the browser (Playwright; curl cannot do
    the Keycloak form easily), then: create an assignment on the fixture, wait for the review, decide findings, open a retro, chat, "wrap up",
    confirm cards, read scorecards. Build the web app and screenshot it with Playwright. Fix what breaks.
-9. Update the README status table, the design doc's "Verified facts" and "Risks" with what was and was not exercised.
+9. ~~Update the README status table, the design doc's "Verified facts" and "Risks"~~ **Done**.
+10. **Next, not started:** run against a real model (an OpenAI-compatible endpoint with a key, once egress allows one)
+    and the GitHub PR source on a real pull request. Then slice 2 as the design doc describes.
 
 **Done for slice 1 means:** the PR-review scenario runs end to end on the fixture through the UI with the fake endpoint,
 the ledger rows carry agent hashes, the retro conversation produces confirmable cards, scorecards show per agent and hash,
-and the doc says plainly what was run and what was only compiled.
+and the doc says plainly what was run and what was only compiled. **All met** (section 1). Only compiled: the `openai`
+endpoint kind and the GitHub PR source.
 
 ## 6. Gotchas already paid for
 
@@ -324,12 +350,17 @@ and the doc says plainly what was run and what was only compiled.
   dashboard with one-span traces.
 - `InvalidOperationException` means "conflict" only when the platform throws it as `ConflictException`; EF throws the
   plain type for programming errors (empty `SingleAsync`), which must stay 500s.
+- TanStack Query retries failed queries three times by default. The web app's client turns that off for 4xx answers
+  (they are the API's answer), or a refused page shows a spinner for seconds first.
+- In the retro, the first user message stands for opening it and is drawn as a note, not a bubble; count bubbles with
+  that in mind when scripting the chat.
 - Inside an EF query, do not reach into a loaded entity's collection (`a.Phases.Single(...)` inside `Where`): EF tries
   to translate it and fails. Compute the value first.
 
 ## 7. Prompt to start the next session
 
 > Read `05-agent-platform/docs/HANDOFF.md` and `05-agent-platform/docs/architecture.md` on branch
-> `claude/modest-lamport-rm5j2v`, then continue Roster slice 1 from step 7 of section 5 (the web app). Many small commits, push as you
+> `claude/modest-lamport-rm5j2v`. Slice 1 is done and walked through in the browser; continue from step 10 of section 5
+> (a real model and a real pull request) or with slice 2, whichever the owner picks. Many small commits, push as you
 > go, plenty of comments, no PRs, no tests. Install the .NET 10 SDK first (`apt-get update && apt-get install -y
 > dotnet-sdk-10.0`) and start Docker (`dockerd`) as section 3 describes.

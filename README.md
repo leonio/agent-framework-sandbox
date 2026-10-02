@@ -12,7 +12,9 @@ Every sample:
   `Directory.Packages.props`), so you can copy one folder out and it still builds;
 - runs **offline by default** against a scripted mock `IChatClient`, so agents, tool calls, structured
   output, loops and fan-out all execute for real without an API key, and switches to OpenAI, Azure OpenAI
-  or GitHub Models with one setting;
+  or GitHub Models with one setting. **Note:** GitHub Models was retired on 30 July 2026, so the `GitHubModels`
+  provider option in samples 01 to 03 no longer works; use OpenAI, Azure OpenAI / Foundry or any
+  OpenAI-compatible endpoint instead;
 - is **heavily commented**: each file says why it is written that way, which alternatives were
   considered, and links to the docs;
 - keeps agent behaviour in **Markdown prompts, skills and instructions** loaded at runtime, so you can

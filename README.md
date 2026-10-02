@@ -27,6 +27,16 @@ Every sample:
 | 03 | [MR architecture review](03-mr-architecture-review/) | Console | Pulls a GitHub pull request and runs design, security and extensibility reviewers in parallel; a human accepts or rejects each finding with a reason, and those reasons feed later reviews. |
 | 04 | [Incident triage](04-incident-triage/) | Console | Points at a repo (plus optional commit or tag) and pasted incident reports; extracts signals, correlates them into incidents, finds a root cause with real RAG over runbooks and code, then drafts the Jira ticket and postmortem. |
 
+## The platform
+
+The samples share no code on purpose. **05 is where their ideas are rebuilt as one platform**: agents become reusable,
+versioned packages in a library; scenarios compose them; work runs in runner pools; people pick the model endpoint in
+the UI and bring their own keys; and feedback is a conversational retro that feeds back into each agent.
+
+| # | Project | Host | Status |
+| --- | --- | --- | --- |
+| 05 | [Roster](05-agent-platform/) | ASP.NET Core + React + Aspire | Design in [`05-agent-platform/docs/architecture.md`](05-agent-platform/docs/architecture.md); built in slices. |
+
 ## How they fit together
 
 The four samples follow one delivery story and one architecture, and each adds something the
@@ -137,7 +147,8 @@ long-running, persisted workflows.
 ├─ 01-cli-design-pipeline/        console · prompts/, skills/, instructions/ at the sample root
 ├─ 02-sdlc-studio-web/            ASP.NET Core API + React UI + tests
 ├─ 03-mr-architecture-review/     console + tests
-└─ 04-incident-triage/            console
+├─ 04-incident-triage/            console
+└─ 05-agent-platform/             Roster: design doc, then the platform built in slices
 ```
 
 The samples share no code on purpose: each is meant to be read, copied and changed on its own. Where they

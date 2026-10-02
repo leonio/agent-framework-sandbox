@@ -234,28 +234,29 @@ Commit after each numbered step and push. Build after every file group.
      are stored as names.
    - Not built yet and belonging to the API step: creating or refreshing the `AppUser` row from the claims at sign-in,
      and the credential and endpoint CRUD (use `SecretVault.Create(userId, kind, label, secret)` to store a key).
-3. **Migrator** (`Roster.Migrator`): `await db.Database.MigrateAsync()`, then seed one shared endpoint
-   (`OwnerId = null`, `Kind = Fake`, `DefaultModel = "fake"`) if there is none, then exit. Small worker-service host.
-4. **Runner** (`Roster.Runner`): `BackgroundService` claim loop. Per job: `IJobQueue.ClaimAsync(pool, workerId, lease)`,
-   a heartbeat timer calling `HeartbeatAsync` (cancel the job's token if it returns false), then in a fresh DI scope
-   `JobDispatcher.HandleAsync(job, token)`, then `CompleteAsync` or `FailAsync(job.Id, workerId, ex.Message)`. The smoke
-   harness's `RunWorkersAsync` is the shape, minus the heartbeat. Concurrency = N such loops. Config
-   `Runner:Pool`, `Runner:Placement` (`InProcess` or `Pool`), `Runner:Concurrency`, `Runner:WorkerId`.
-5. **API** (`Roster.Api`): sign-in is **done** (Keycloak, see design doc section 10). Still to do: create or refresh the
-   `AppUser` row on sign-in (the OIDC `OnTokenValidated` event, or the first authenticated request), add `title` to
-   `/api/auth/me` and a `PUT /api/me/profile` for it, then endpoints and credentials CRUD
-   (write-only keys), agent catalogue with versions and scorecards, assignments (create, list, get, cancel, finding
-   decisions with reasons), SSE per assignment, retro (get or start, post message, confirm cards), OpenAPI document.
-   The platform calls behind them: `ScenarioEngine.CreateAssignmentAsync` / `RequestCancelAsync`,
-   `FindingDecisions.DecideAsync`, `RetroService.OpenAsync` / `PostAsync` / `ConfirmCardAsync` / `AddCardAsync` /
-   `DiscardCardAsync`, `ScorecardService.GetAsync`, and for SSE `EventStream.SubscribeAsync(assignmentId, lastEventId)`
-   (register it with `services.AddRosterEventStream()`; use the event id as the SSE `id:` so `Last-Event-ID` resumes).
-   Map `UnauthorizedAccessException` to 403/404, `ArgumentException` to 400, `InvalidOperationException` to 409 and
-   `KeyNotFoundException` to 404.
-6. **AppHost, the rest**: ServiceDefaults and the AppHost with Keycloak and `api` exist. Add Postgres (data volume) and
-   the `roster` database, `migrator` (others `WaitForCompletion` it), `runner` with `WithReplicas(2)` (no Keycloak
-   reference; it never signs anyone in), `AddViteApp("web")` **on port 5173** (the realm's redirect URIs name it), and
-   a generated, persisted secret parameter `vault-key`. This can be **run** here (section 3), not just compiled.
+3. ~~**Migrator**~~ **Done**: migrates, seeds the shared `Fake (offline)` endpoint once, exits 0 (1 on failure).
+4. ~~**Runner**~~ **Done**: `Runner:Concurrency` claim loops (default 4), heartbeats every `Runner:HeartbeatSeconds`
+   (20) on a `Runner:LeaseSeconds` (60) lease, `Runner:DrainSeconds` (25) grace on shutdown, `Runner:Pool`,
+   `Runner:WorkerId` (defaults to machine name and pid), `Runner:Placement` (read by the platform). Idle claims are not
+   traced. A NOTIFY on enqueue could replace the one-second idle poll later.
+5. ~~**API**~~ **Done**. The routes, all under `/api`, all needing a signed-in person and, for anything but GET,
+   the `X-Roster` header:
+   - `auth/login`, `auth/register`, `auth/logout` (form post), `auth/me` (adds title and default endpoint);
+     `PUT me/profile`.
+   - `credentials` (GET, POST, DELETE `{id}`): write-only; kinds `api-key`, `github-token`.
+   - `endpoints` (GET, POST, PUT `{id}`, DELETE `{id}`): kinds `openai`, `fake`; `shared: true` for admins only.
+   - `agents`, `agents/{name}`, `scorecards?agent=`.
+   - `assignments` (POST, GET with `?all=true` for admins), `assignments/{id}`, `assignments/{id}/steps/{stepId}`
+     (the ledger view), `POST assignments/{id}/cancel`, `POST findings/{id}/decision` (`accepted` or `rejected` with
+     a reason), `assignments/{id}/events` (SSE; resumes after `Last-Event-ID`).
+   - `assignments/{id}/retro` (GET; POST opens it), `POST retros/{sessionId}/messages` (202; the reply arrives as
+     `retro.message` events), `POST retros/{sessionId}/cards`, `POST retro-cards/{id}/confirm`,
+     `POST retro-cards/{id}/discard`.
+   - `/openapi/v1.json` in Development, anonymous (23 paths). Generate the web app's types from it.
+   Errors are problem details: 400 bad input, 403 not yours, 404 not found, 409 conflict (`ConflictException`).
+   Enums are camelCase strings (`awaitingTriage`, `rejected`, `good`).
+6. **AppHost, the rest**: everything but the web app is in and runs. Left for step 7: `AddViteApp("web")` **on port
+   5173** (the realm's redirect URIs name it), referencing the api.
 7. **Web** (`Roster.Web`): Vite 8, React 19.3, Tailwind 4.3 (`@tailwindcss/vite`), TypeScript 7, React Router 8.4, TanStack
    Query. Pages: sign in or register; assignments list; new assignment (scenario, endpoint picker, optional advanced
    overrides); assignment (stepper, live events over SSE, findings triage with reasons, **Retro tab as a chat** with

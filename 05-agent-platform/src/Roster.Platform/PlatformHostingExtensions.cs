@@ -8,6 +8,7 @@ using Roster.Platform.Credentials;
 using Roster.Platform.Data;
 using Roster.Platform.Ledger;
 using Roster.Platform.Models;
+using Roster.Platform.People;
 using Roster.Platform.Queue;
 using Roster.Platform.Retro;
 using Roster.Platform.Scenarios;
@@ -55,6 +56,9 @@ public static class PlatformHostingExtensions
         services.AddSingleton<IModelResolver, ModelRouter>();
         services.AddSingleton<IInvocationLedger, LedgerRecorder>();
         services.AddSingleton<ICapabilityBinder, CapabilityBinder>();
+
+        // People: the rows behind signed-in accounts, and their profile.
+        services.AddSingleton<PeopleService>();
 
         // Queue and events.
         services.AddSingleton<IJobQueue, PostgresJobQueue>();

@@ -113,22 +113,41 @@ internal static partial class FakeFacilitator
             ? cards.Count
             : 0;
 
-    // The timeline's shape belongs to the platform. Whatever it is, take its first line that reads like text.
+    // The timeline's shape belongs to the platform (a list of strings, a list of objects, plain text). Whatever it is,
+    // find the first piece of text that reads like a sentence and quote its first sentence.
     private static string FirstMoment(object? result)
     {
-        string text = result switch
+        JsonElement json = result switch
         {
-            null => "",
-            string s => s,
-            JsonElement { ValueKind: JsonValueKind.String } e => e.GetString() ?? "",
-            _ => JsonSerializer.Serialize(result, ContractJson.Options),
+            null => default,
+            JsonElement e => e,
+            string s => TryParseJson(s) ?? JsonSerializer.SerializeToElement(s),
+            _ => JsonSerializer.SerializeToElement(result, ContractJson.Options),
         };
 
-        string? line = text.Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-            .Select(l => l.Trim('[', ']', '{', '}', ',', '"', ' ', '-'))
-            .FirstOrDefault(l => l.Count(char.IsLetter) >= 10);
+        string? moment = FirstText(json);
+        return moment is null ? "the review itself." : FirstSentences(moment.Trim(), 1).TrimEnd('.') + ".";
+    }
 
-        return line is null ? "the review itself." : FirstSentences(line, 1).TrimEnd('.') + ".";
+    // Depth-first: the first string with at least ten letters, looking inside arrays and objects.
+    private static string? FirstText(JsonElement element) => element.ValueKind switch
+    {
+        JsonValueKind.String => element.GetString() is { } s && s.Count(char.IsLetter) >= 10 ? s : null,
+        JsonValueKind.Array => element.EnumerateArray().Select(FirstText).FirstOrDefault(t => t is not null),
+        JsonValueKind.Object => element.EnumerateObject().Select(p => FirstText(p.Value)).FirstOrDefault(t => t is not null),
+        _ => null,
+    };
+
+    private static JsonElement? TryParseJson(string text)
+    {
+        try
+        {
+            return JsonDocument.Parse(text).RootElement.Clone();
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     private static string FirstSentences(string text, int count)

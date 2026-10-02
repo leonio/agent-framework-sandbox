@@ -56,7 +56,7 @@ public sealed class UserCredential
     /// <summary>A masked form such as <c>sk-…3f9a</c>: enough to recognise the key, useless to steal.</summary>
     public required string Hint { get; set; }
 
-    /// <summary>AES-256-GCM output laid out as nonce (12 bytes), ciphertext, tag (16 bytes). See <see cref="SecretVault"/>.</summary>
+    /// <summary>AES-256-GCM output: version byte, nonce (12 bytes), ciphertext, tag (16 bytes). See <see cref="Credentials.SecretVault"/>.</summary>
     public required byte[] Sealed { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }

@@ -30,14 +30,33 @@ since, the environment notes, and an ordered plan for what is left.
 | `Roster.Agents.Abstractions` | Done, builds |
 | `Roster.Agents.Library` (3 reviewers, retro facilitator, 3 skills, contracts) | Done, builds |
 | `Roster.Agents.Runtime`: `ManifestParser`, `AgentCatalog` | Done, builds, **smoke-run**: loads the 4 agents, hashes, placement |
+| `Roster.Agents.Runtime` remainder: `PromptRenderer`, `ContractSchemas`, `StructuredOutput`, `EndpointGates`, `ChatClientFactory`, the fake endpoint, `AgentRunner` (typed + chat), `AddRosterAgentRuntime` | Done, **smoke-run with the fake endpoint** (below); the `openai` kind is compiled only |
 | `Roster.ServiceDefaults` | Done (template-shaped) |
 | `Roster.Api`: Keycloak sign-in only (login, register, logout, me, `X-Roster` check, fallback policy) | Done, **run** |
 | `Roster.AppHost`: Keycloak (realm import, data volume, generated secrets) + api | Done, **run under Docker**, browser-tested |
-| Rest of the runtime, platform, migrator, runner, rest of the API, rest of the AppHost, web | **Not started** (plan in section 5) |
+| Platform, migrator, runner, rest of the API, rest of the AppHost, web | **Not started** (plan in section 5, from step 2) |
 
 The sign-in slice has been run end to end in the sandbox (section 3 says how): Keycloak imported the realm; Playwright
 signed in as the seeded admin (`roles: [member, admin]`) and as a newly registered person (`roles: [member]`), signed out
-(the Keycloak session ended too) and was refused an open redirect. Nothing has touched a database or a model yet.
+(the Keycloak session ended too) and was refused an open redirect.
+
+The runtime has been smoke-run through DI with an in-memory ledger, a stub resolver and stub tools (a scratch harness,
+not committed, per the no-tests rule), against the fake endpoint:
+
+- The three reviewers ran in parallel on the sample PR and returned schema-valid findings (security 4, design 2,
+  extensibility 2, including the prompt-injection text in the description). Ledger rows carry the agent hash, model,
+  strategy, tokens, duration and reasoning.
+- `fake-flaky` produced a cut-off first reply; the repair attempt fixed it and the row says `repaired`.
+- An endpoint without native structured output switched the agent to the `prompted` strategy and still parsed.
+- An agent the fake has no rules for got a schema sample that validated.
+- Refusals before any ledger row: an agent with an unknown capability (so `Pool` placement) on an in-process host, the
+  wrong contract types, and a typed agent through `ChatAsync`.
+- The concurrency gate serialised three slow calls at capacity 1 (6.0 s) and ran them together at capacity 3 (2.0 s).
+- The retro facilitator streamed four turns, called `get_timeline` on the first, asked follow-ups, and on "wrap up"
+  called `propose_cards` with three cards; the ledger recorded the tool calls with their arguments and results.
+
+Nothing has touched a database or a real model yet. The Ollama and Hugging Face registries are blocked here, so the
+`openai` endpoint kind has not been run against anything.
 
 ## 2. Decisions made after the design doc
 
@@ -116,7 +135,10 @@ These came from the owner in conversation. The design doc already reflects most 
                                     runtime interfaces (IAgentRunner, IModelResolver, ICapabilityBinder, IInvocationLedger)
     Roster.Agents.Library/          agent-library/agents/{reviewers,retro}/*/AGENT.md, agent-library/skills/*/SKILL.md,
                                     Contracts/ReviewContracts.cs (ChangeReviewInput, Findings, FindingDraft)
-    Roster.Agents.Runtime/          ManifestParser (YamlDotNet), AgentCatalog (hashes, skills, contracts)
+    Roster.Agents.Runtime/          ManifestParser (YamlDotNet), AgentCatalog (hashes, skills, contracts),
+                                    PromptRenderer (untrusted fencing), ContractSchemas + StructuredOutput (schemas,
+                                    prompted JSON, repair), EndpointGates + ChatClientFactory (openai, fake), Fake/ (the
+                                    fake endpoint), AgentRunner{,.Typed,.Chat}, RuntimeServiceCollectionExtensions
     Roster.ServiceDefaults/         Aspire service defaults (OTel, health, service discovery, resilience)
     Roster.Api/                     Program.cs, Auth/RosterAuth.cs (cookie + Keycloak OIDC, auth endpoints, X-Roster check)
     Roster.AppHost/                 AppHost.cs (Keycloak + api), Realms/roster-realm.json + README.md

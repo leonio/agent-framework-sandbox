@@ -5,6 +5,7 @@
     <Project Path="src/Roster.Agents.Runtime/Roster.Agents.Runtime.csproj" />
     <Project Path="src/Roster.Api/Roster.Api.csproj" />
     <Project Path="src/Roster.AppHost/Roster.AppHost.csproj" />
+    <Project Path="src/Roster.Platform/Roster.Platform.csproj" />
     <Project Path="src/Roster.ServiceDefaults/Roster.ServiceDefaults.csproj" />
   </Folder>
 </Solution>

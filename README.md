@@ -37,7 +37,7 @@ the UI and bring their own keys; and feedback is a conversational retro that fee
 
 | # | Project | Host | Status |
 | --- | --- | --- | --- |
-| 05 | [Roster](05-agent-platform/) | ASP.NET Core + React + Aspire | Design in [`05-agent-platform/docs/architecture.md`](05-agent-platform/docs/architecture.md); built in slices. |
+| 05 | [Roster](05-agent-platform/) | ASP.NET Core + React + Aspire | Design in [`05-agent-platform/docs/architecture.md`](05-agent-platform/docs/architecture.md); built in slices, slice 1 (PR review) runs end to end. |
 
 A spike sits beside it, not part of it: [`spikes/a2a-agent-fleet`](spikes/a2a-agent-fleet/) explores letting each team own
 and run its own agents behind A2A, with a published contract the platform pins. It runs end to end with

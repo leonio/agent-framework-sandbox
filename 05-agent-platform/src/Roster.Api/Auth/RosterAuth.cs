@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Roster.Platform.Data;
+using Roster.Platform.People;
 
 namespace Roster.Api.Auth;
 
@@ -140,6 +142,15 @@ public static class RosterAuth
                 // Plain authorization requests, no PAR. Keycloak 26.6 ignored prompt=create (the register link) when it
                 // arrived inside a pushed request, and PAR adds nothing we need for local sign-in.
                 options.PushedAuthorizationBehavior = PushedAuthorizationBehavior.Disable;
+
+                // Every sign-in creates or refreshes the person's row, so assignments and credentials always have an
+                // owner to point at, and a name changed in Keycloak shows up in Roster at the next sign-in.
+                options.Events.OnTokenValidated = async context =>
+                {
+                    ClaimsPrincipal principal = context.Principal!;
+                    PeopleService people = context.HttpContext.RequestServices.GetRequiredService<PeopleService>();
+                    await people.SignedInAsync(principal.UserId(), principal.DisplayName(), principal.Email(), context.HttpContext.RequestAborted);
+                };
             });
 
         builder.Services.AddAuthorizationBuilder()
@@ -200,11 +211,19 @@ public static class RosterAuth
             .AllowAnonymous()
             .WithMetadata(new WithoutRosterHeader());
 
-        auth.MapGet("/me", (ClaimsPrincipal user) => new Me(
-            Id: user.FindFirstValue("sub") ?? throw new InvalidOperationException("Signed-in principal has no sub claim."),
-            Name: user.FindFirstValue("name") ?? user.FindFirstValue("preferred_username") ?? "",
-            Email: user.FindFirstValue("email"),
-            Roles: [.. user.FindAll(RoleClaim).Select(c => c.Value).Where(AppRoles.Contains)]));
+        // The web app calls this on load: 401 means "show the sign-in page". It also makes sure the person's row
+        // exists (a session can outlive a reset local database) and returns the profile fields Roster keeps.
+        auth.MapGet("/me", async (ClaimsPrincipal user, PeopleService people, CancellationToken cancellationToken) =>
+        {
+            AppUser person = await people.SignedInAsync(user.UserId(), user.DisplayName(), user.Email(), cancellationToken);
+            return new Me(
+                Id: person.Id,
+                Name: person.DisplayName,
+                Email: person.Email,
+                Title: person.Title,
+                DefaultEndpointId: person.DefaultEndpointId,
+                Roles: [.. user.FindAll(RoleClaim).Select(c => c.Value).Where(AppRoles.Contains)]);
+        });
 
         return app;
     }
@@ -212,8 +231,8 @@ public static class RosterAuth
     private static string LocalOrRoot(string? url) =>
         !string.IsNullOrEmpty(url) && url[0] == '/' && (url.Length == 1 || (url[1] != '/' && url[1] != '\\')) ? url : "/";
 
-    /// <summary>The signed-in person as the web app sees them. The title joins this once the app profile exists.</summary>
-    public sealed record Me(string Id, string Name, string? Email, string[] Roles);
+    /// <summary>The signed-in person as the web app sees them: shown as <c>Name · Title</c>.</summary>
+    public sealed record Me(string Id, string Name, string? Email, string? Title, Guid? DefaultEndpointId, string[] Roles);
 
     /// <summary>Endpoint metadata: this unsafe endpoint does not need the <see cref="RequestHeader"/> header.</summary>
     public sealed class WithoutRosterHeader;

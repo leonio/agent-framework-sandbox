@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Roster.Api.Auth;
+using Roster.Api.Endpoints;
 using Roster.Api.Http;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -43,5 +44,6 @@ app.UseAuthorization();
 
 app.MapDefaultEndpoints();
 app.MapAuthEndpoints();
+app.MapProfileEndpoints();
 
 app.Run();

@@ -204,30 +204,32 @@ Commit after each numbered step and push. Build after every file group.
      the fake facilitator sends that, and the facilitator's instructions describe it. `get_timeline` may return any
      JSON (a list of strings is simplest); the fake quotes its first sentence-like string.
    - Model-call telemetry is under `Roster.Models`; service defaults already collect it.
-2. **Platform** (`Roster.Platform`: EF Core 10 + Npgsql 10.0.3; no ASP.NET Core Identity, Keycloak owns accounts)
-   - Entities: `AppUser` (**id = Keycloak `sub`**, display name and email refreshed from the claims at each sign-in, title), `UserCredential` (kind `api-key` | `github-token`, masked hint, ciphertext),
-     `ModelEndpoint` (owner or shared, kind, base URL, default model, tier-to-model map, capabilities, limits, credential
-     id), `Assignment`, `Phase`, `Job`, `RunEvent`, `Invocation` (the ledger), `Finding`, `RetroSession`, `RetroMessage`,
-     `RetroCard`, `AgentVersion`. JSON in `jsonb` string columns.
-   - Services: `PostgresJobQueue` (`FOR UPDATE SKIP LOCKED`, lease, heartbeat, backoff, `traceparent`, pool), `EventBus` (insert
-     `run_events` plus `pg_notify`) and a LISTEN-based stream for the API, `SecretVault` (AES-256-GCM, key derived with
-     HKDF-SHA256 from `Vault:Key`, associated data `userId|credentialId|kind`), `ModelRouter : IModelResolver` (step, phase,
-     assignment endpoint, user default, shared default; tier to model through the endpoint's map), `LedgerRecorder`,
-     `CapabilityBinder` (`assignment.read` tools: `get_timeline`, `list_steps`, `get_step`, `get_findings`, `get_reasoning`,
-     `get_chat`; `retro.propose` tool: `propose_cards`), PR source (bundled fixture plus GitHub REST), `PrReviewScenario`
-     with a `ScenarioEngine` (phases: fetch, review with three agents in parallel, triage), `RetroService` (in-progress
-     message updated at most every 250 ms), `ScorecardService`.
-   - Design-time factory so `dotnet ef migrations add Initial` works from this project. `dotnet tool install --global dotnet-ef --version 10.0.12`.
-   - Bundle the fixture from `03-mr-architecture-review/src/MrArchitectureReview/Fixtures/SamplePr/` as content. Its text is
-     untrusted data like any other PR text.
-3. **Migrator** (`Roster.Migrator`): apply migrations, seed a shared `fake` endpoint, exit.
-4. **Runner** (`Roster.Runner`): `BackgroundService` claim loop with heartbeat; handlers `phase.run` and `retro.turn`; config
+2. ~~**Platform**~~ **Done** (second session), on EF Core as the owner asked. What the hosts need to know:
+   - Every host: `builder.AddServiceDefaults(); builder.AddRosterPlatform();` (connection string `roster`, `Vault:Key`).
+     Platform services use `IDbContextFactory<RosterDb>`; API endpoints can take the scoped `RosterDb`.
+   - Schema changes: edit the entities, then `dotnet ef migrations add <Name> --project src/Roster.Platform`. Table names
+     come from the DbSet names (`users`, `credentials`, `endpoints`, `assignments`, ...), columns are snake_case, enums
+     are stored as names.
+   - Not built yet and belonging to the API step: creating or refreshing the `AppUser` row from the claims at sign-in,
+     and the credential and endpoint CRUD (use `SecretVault.Create(userId, kind, label, secret)` to store a key).
+3. **Migrator** (`Roster.Migrator`): `await db.Database.MigrateAsync()`, then seed one shared endpoint
+   (`OwnerId = null`, `Kind = Fake`, `DefaultModel = "fake"`) if there is none, then exit. Small worker-service host.
+4. **Runner** (`Roster.Runner`): `BackgroundService` claim loop. Per job: `IJobQueue.ClaimAsync(pool, workerId, lease)`,
+   a heartbeat timer calling `HeartbeatAsync` (cancel the job's token if it returns false), then in a fresh DI scope
+   `JobDispatcher.HandleAsync(job, token)`, then `CompleteAsync` or `FailAsync(job.Id, workerId, ex.Message)`. The smoke
+   harness's `RunWorkersAsync` is the shape, minus the heartbeat. Concurrency = N such loops. Config
    `Runner:Pool`, `Runner:Placement` (`InProcess` or `Pool`), `Runner:Concurrency`, `Runner:WorkerId`.
 5. **API** (`Roster.Api`): sign-in is **done** (Keycloak, see design doc section 10). Still to do: create or refresh the
    `AppUser` row on sign-in (the OIDC `OnTokenValidated` event, or the first authenticated request), add `title` to
    `/api/auth/me` and a `PUT /api/me/profile` for it, then endpoints and credentials CRUD
    (write-only keys), agent catalogue with versions and scorecards, assignments (create, list, get, cancel, finding
    decisions with reasons), SSE per assignment, retro (get or start, post message, confirm cards), OpenAPI document.
+   The platform calls behind them: `ScenarioEngine.CreateAssignmentAsync` / `RequestCancelAsync`,
+   `FindingDecisions.DecideAsync`, `RetroService.OpenAsync` / `PostAsync` / `ConfirmCardAsync` / `AddCardAsync` /
+   `DiscardCardAsync`, `ScorecardService.GetAsync`, and for SSE `EventStream.SubscribeAsync(assignmentId, lastEventId)`
+   (register it with `services.AddRosterEventStream()`; use the event id as the SSE `id:` so `Last-Event-ID` resumes).
+   Map `UnauthorizedAccessException` to 403/404, `ArgumentException` to 400, `InvalidOperationException` to 409 and
+   `KeyNotFoundException` to 404.
 6. **AppHost, the rest**: ServiceDefaults and the AppHost with Keycloak and `api` exist. Add Postgres (data volume) and
    the `roster` database, `migrator` (others `WaitForCompletion` it), `runner` with `WithReplicas(2)` (no Keycloak
    reference; it never signs anyone in), `AddViteApp("web")` **on port 5173** (the realm's redirect URIs name it), and

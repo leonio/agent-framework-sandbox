@@ -42,7 +42,7 @@ public sealed class FindingDecisions(IDbContextFactory<RosterDb> dbs, ScenarioEn
 
         if (assignment.State is not (AssignmentState.AwaitingTriage or AssignmentState.Completed))
         {
-            throw new InvalidOperationException($"Findings can be decided once the review is done; the assignment is {assignment.State}.");
+            throw new ConflictException($"Findings can be decided once the review is done; the assignment is {assignment.State}.");
         }
 
         AppUser? person = await db.Users.AsNoTracking().SingleOrDefaultAsync(u => u.Id == userId, cancellationToken);

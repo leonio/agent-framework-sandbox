@@ -77,7 +77,7 @@ public sealed class RetroService(
         List<RetroMessage> messages = await db.RetroMessages.Where(m => m.SessionId == sessionId).OrderBy(m => m.Sequence).ToListAsync(cancellationToken);
         if (messages.Count > 0 && (messages[^1].InProgress || messages[^1].Role == "user"))
         {
-            throw new InvalidOperationException("The facilitator is still answering. Wait for its reply before sending another message.");
+            throw new ConflictException("The facilitator is still answering. Wait for its reply before sending another message.");
         }
 
         DateTimeOffset now = DateTimeOffset.UtcNow;

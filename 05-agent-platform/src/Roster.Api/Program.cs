@@ -48,5 +48,6 @@ app.MapProfileEndpoints();
 app.MapCredentialEndpoints();
 app.MapModelEndpointApi();
 app.MapAgentEndpoints();
+app.MapAssignmentEndpoints();
 
 app.Run();

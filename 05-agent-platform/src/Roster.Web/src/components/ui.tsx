@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { useEffect, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 
 /**
  * The few building blocks every page uses, so the app looks like one thing: cards, buttons, badges, a spinner and the
@@ -94,4 +94,37 @@ export function timeAgo(iso: string): string {
   const hours = Math.round(minutes / 60);
   if (hours < 24) return `${hours} h ago`;
   return new Date(iso).toLocaleDateString();
+}
+
+/**
+ * A button for destructive actions that asks twice: the first click arms it ("Really delete?"), a second click within
+ * a few seconds does it. Gentler than a browser confirm dialog, and it keeps the question next to the thing.
+ */
+export function ConfirmButton({ label, confirmLabel, onConfirm, disabled }: { label: string; confirmLabel: string; onConfirm: () => void; disabled?: boolean }) {
+  const [armed, setArmed] = useState(false);
+
+  // Disarm on its own after a short while, so a stray click later does not delete anything.
+  useEffect(() => {
+    if (!armed) return;
+    const timer = setTimeout(() => setArmed(false), 4000);
+    return () => clearTimeout(timer);
+  }, [armed]);
+
+  return (
+    <Button
+      type="button"
+      variant={armed ? 'danger' : 'ghost'}
+      disabled={disabled}
+      onClick={() => {
+        if (armed) {
+          setArmed(false);
+          onConfirm();
+        } else {
+          setArmed(true);
+        }
+      }}
+    >
+      {armed ? confirmLabel : label}
+    </Button>
+  );
 }

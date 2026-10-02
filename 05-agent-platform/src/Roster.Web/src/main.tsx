@@ -10,6 +10,7 @@ import { NewAssignmentPage } from './pages/NewAssignmentPage';
 import { AssignmentPage } from './pages/AssignmentPage';
 import { AgentsPage } from './pages/AgentsPage';
 import { AgentPage } from './pages/AgentPage';
+import { SettingsPage } from './pages/SettingsPage';
 import './index.css';
 
 // Server state lives in TanStack Query. Live updates come from the server-sent events stream, which invalidates
@@ -27,6 +28,7 @@ const router = createBrowserRouter([
       { path: 'assignments/:id', element: <AssignmentPage /> },
       { path: 'agents', element: <AgentsPage /> },
       { path: 'agents/:name', element: <AgentPage /> },
+      { path: 'settings', element: <SettingsPage /> },
     ],
   },
 ]);

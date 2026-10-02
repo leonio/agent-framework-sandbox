@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+/*
+  Tailwind v4: the import brings in the whole framework; classes in the components do the rest. A few tokens and base
+  styles live here so every page shares them. Dark mode follows the operating system (Tailwind's default `dark:`).
+*/
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+@layer base {
+  html {
+    color-scheme: light dark;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+  }
+}

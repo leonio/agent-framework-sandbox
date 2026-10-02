@@ -302,8 +302,9 @@ Commit after each numbered step and push. Build after every file group.
    the Keycloak form easily), then: create an assignment on the fixture, wait for the review, decide findings, open a retro, chat, "wrap up",
    confirm cards, read scorecards. Build the web app and screenshot it with Playwright. Fix what breaks.
 9. ~~Update the README status table, the design doc's "Verified facts" and "Risks"~~ **Done**.
-10. **Next, not started:** run against a real model (an OpenAI-compatible endpoint with a key, once egress allows one)
-    and the GitHub PR source on a real pull request. Then slice 2 as the design doc describes.
+10. **Next: slice 2**, planned task by task in [`slice-2.md`](slice-2.md). Its track 0 holds what is left of slice 1:
+    two doc fixes, reasoning retention, and the real-model check (an OpenAI-compatible endpoint with a key, and the
+    GitHub PR source on a real pull request), which the owner runs on their own machine.
 
 **Done for slice 1 means:** the PR-review scenario runs end to end on the fixture through the UI with the fake endpoint,
 the ledger rows carry agent hashes, the retro conversation produces confirmable cards, scorecards show per agent and hash,
@@ -360,7 +361,8 @@ endpoint kind and the GitHub PR source.
 ## 7. Prompt to start the next session
 
 > Read `05-agent-platform/docs/HANDOFF.md` and `05-agent-platform/docs/architecture.md` on branch
-> `claude/modest-lamport-rm5j2v`. Slice 1 is done and walked through in the browser; continue from step 10 of section 5
-> (a real model and a real pull request) or with slice 2, whichever the owner picks. Many small commits, push as you
+> `claude/modest-lamport-rm5j2v`, then `05-agent-platform/docs/slice-2.md`. Slice 1 is done and walked through in the
+> browser. Take the next task the owner names from slice-2.md (or the next in its suggested order), and mark it done
+> there when it runs. Many small commits, push as you
 > go, plenty of comments, no PRs, no tests. Install the .NET 10 SDK first (`apt-get update && apt-get install -y
 > dotnet-sdk-10.0`) and start Docker (`dockerd`) as section 3 describes.

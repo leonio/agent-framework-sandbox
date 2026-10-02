@@ -393,6 +393,8 @@ flowchart TB
 | 2 | **Incident triage**: signals, correlation, root cause with knowledge retrieval, drafts. Plus the sandbox pool and a Copilot-backed developer | pgvector, lessons, placement policy, per-user Copilot token |
 | 3 | **Idea to code**: interviewer, specs, planning, development, merge request | The long, multi-phase, human-gated shape |
 
+Slice 2 is planned task by task in [`slice-2.md`](slice-2.md).
+
 Phases are plain C# classes persisted in Postgres. Agent Framework workflow graphs (fan-out, fan-in, loops) may be used
 inside a phase when they earn it.
 

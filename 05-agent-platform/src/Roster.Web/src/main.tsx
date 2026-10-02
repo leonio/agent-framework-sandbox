@@ -7,6 +7,7 @@ import { AuthGate } from './auth';
 import { Layout } from './components/Layout';
 import { AssignmentsPage } from './pages/AssignmentsPage';
 import { NewAssignmentPage } from './pages/NewAssignmentPage';
+import { AssignmentPage } from './pages/AssignmentPage';
 import './index.css';
 
 // Server state lives in TanStack Query. Live updates come from the server-sent events stream, which invalidates
@@ -21,6 +22,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <AssignmentsPage /> },
       { path: 'assignments/new', element: <NewAssignmentPage /> },
+      { path: 'assignments/:id', element: <AssignmentPage /> },
     ],
   },
 ]);

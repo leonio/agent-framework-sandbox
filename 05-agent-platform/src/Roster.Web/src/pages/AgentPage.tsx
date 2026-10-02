@@ -22,7 +22,9 @@ export function AgentPage() {
         <p className="text-sm text-slate-500">{a.description}</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
+      {/* Full width, stacked: the instructions are wrapped at about 120 characters in their AGENT.md, and a narrower
+          card wraps them a second time into ragged lines. */}
+      <div className="space-y-6">
         <Card title="Instructions (current version)">
           <pre className="max-h-[28rem] overflow-auto whitespace-pre-wrap font-mono text-xs">{instructions}</pre>
           <p className="mt-3 text-xs text-slate-500">Skills appended at run time: {a.skills.join(', ') || 'none'}.</p>

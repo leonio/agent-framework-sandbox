@@ -404,7 +404,7 @@ Aspire facts come from the `microsoft/aspire.dev` docs source and Copilot facts 
 
 | Item | Fact |
 |---|---|
-| Aspire | 13.6.0 (published 29 Sep 2026). `AddViteApp`, `WithReplicas`, `AddOpenAI(...).WithEndpoint(...)`, `WithRepl`, `aspire publish` / `aspire deploy`. Keycloak integration is preview. No pgvector support in the Postgres integration. |
+| Aspire | 13.6.0 (published 29 Sep 2026). `AddViteApp`, `WithReplicas`, `AddOpenAI(...).WithEndpoint(...)`, `WithRepl`, `aspire publish` / `aspire deploy`. Keycloak integration is preview (`13.6.0-preview.1.26479.8`, image `quay.io/keycloak/keycloak:26.6`, starts with `start-dev --import-realm`, switches to HTTPS when a dev certificate is present). No pgvector support in the Postgres integration. |
 | Aspire dashboard | GenAI visualizer exists; best with message content recorded. 13.6 keeps up to ten completed runs per application. |
 | Agent Framework | `Microsoft.Agents.AI`, `.Workflows`, `.GitHub.Copilot` are 1.23.0 stable. A2A, AG-UI hosting are `1.23.0-preview`. DurableTask is `1.16.0-preview` and lives in its own repository. |
 | Structured output | `RunAsync<T>` only on `ChatClientAgent`; decorators hide it (ADR 0036, proposed). |
@@ -416,9 +416,11 @@ Aspire facts come from the `microsoft/aspire.dev` docs source and Copilot facts 
 
 ## 16. Risks and open questions
 
-- **Never run end to end by the author.** The authoring sandbox has no Docker daemon, so the Aspire topology is
-  compile-checked only. The services are exercised locally against a Postgres installed from apt. Treat the first
-  `aspire run` as the first real integration test.
+- **Only partly run end to end.** The second session found Docker usable in the sandbox and ran the AppHost: Keycloak
+  imported the realm, and a browser signed in as the seeded admin and as a newly registered member, signed out (ending
+  the Keycloak session) and was refused an open redirect. Everything else in the topology is still to be run.
+- **Keycloak integration is preview.** Its API may change between Aspire releases. The surface used is small:
+  `AddKeycloak`, `WithDataVolume`, `WithRealmImport`, `AddKeycloakOpenIdConnect`.
 - **Copilot specifics.** The SDK's structured output is experimental, and the runtime download happens at build time.
   Both are isolated to the sandbox runner project.
 - **A2A is preview.** The server still ships a stub agent card. See the spike for what a contract-first fleet needs.

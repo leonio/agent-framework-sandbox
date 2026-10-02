@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!--
+      The A2A packages and the Agent Framework hosting packages are preview, and their APIs are marked experimental.
+      MEAI001 is the Microsoft.Extensions.AI experimental diagnostic (response continuations, which A2A tasks use).
+      We acknowledge it here once instead of per call site, and the README lists it as a risk.
+    -->
+    <NoWarn>$(NoWarn);MEAI001;MAAI001;CS8305</NoWarn>
+  </PropertyGroup>
+</Project>

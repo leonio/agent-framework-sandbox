@@ -63,7 +63,7 @@ is still open. Samples `01` to `04` are the reference material it grows out of; 
 | D7 | Endpoints are data; the UI picks one per assignment (or per step); resolution order is fixed | Matches how the owner wants to work | Decided |
 | D8 | Per-user credentials in an AES-GCM vault; jobs carry ids, never secrets | Users bring their own keys and Copilot seat | Decided |
 | D9 | Output strategy is owned by the runtime, per runtime kind | `RunAsync<T>` exists only on `ChatClientAgent` | Decided |
-| D10 | Identity is ASP.NET Core Identity (cookie), roles `admin` and `member`, plus a free-text `title` shown as `Name · Title` | Personal project; Keycloak adds a preview-integration container for little gain | Decided, OIDC can slot in later |
+| D10 | Identity is **Keycloak** (OpenID Connect) through Aspire's Keycloak integration; the API signs people in backend-for-frontend style and keeps a cookie. Roles `admin` and `member` are realm roles; the free-text `title` lives in the app profile, shown as `Name · Title` | Owner wants Keycloak in the Aspire topology and accepts that the integration is preview. A real identity provider from day one; registration, password policy and the admin console come free | Decided, built and run (2 Oct 2026) |
 | D11 | The retro is a chat with `retro-facilitator`; cards are confirmed by the person | Owner asked for a conversation, not a form | Decided |
 | D12 | Postgres everywhere; pgvector arrives with slice 2 (lessons, knowledge) | One store for state, queue, vectors and full-text | Decided |
 | D13 | Remote (A2A) placement is spiked separately in `spikes/a2a-agent-fleet`, not built into the platform yet | A2A packages are preview; teams owning agents is a later goal | Decided |
@@ -252,14 +252,47 @@ Build-time gotcha: `GitHub.Copilot.SDK` downloads a pinned Copilot CLI runtime f
 
 ## 10. Identity
 
-ASP.NET Core Identity with cookie auth, stored in Postgres. The first account becomes `admin`; registration can be
-switched off. Permission roles are `admin` and `member`. Separately, each person has a free-text **title**
-(`Security Engineer`, `Product Owner`, ...) shown as `Priya Nair · Security Engineer` and snapshotted onto every card
-and decision, so feedback can later be weighed by who gave it. The SPA is same-origin; unsafe requests require a custom
-header in addition to `SameSite=Lax` cookies.
+**Keycloak** is the identity provider, added to the AppHost with `Aspire.Hosting.Keycloak` and used from the API with
+`Aspire.Keycloak.Authentication`. Both are preview; Keycloak itself is not. The owner chose it over ASP.NET Core
+Identity knowing that.
 
-Keycloak was considered and dropped for now: its Aspire integration is preview and it is a heavy container for a
-personal project. OIDC can replace the cookie login later without touching the domain model.
+```mermaid
+sequenceDiagram
+  participant B as Browser (web app)
+  participant A as api
+  participant K as Keycloak (realm roster)
+  B->>A: GET /api/auth/login?returnUrl=/x
+  A-->>B: 302 to Keycloak authorize (code flow, PKCE, state, nonce)
+  B->>K: sign in or register on Keycloak's page
+  K-->>B: 302 to /api/auth/signin-oidc?code=...
+  B->>A: GET /api/auth/signin-oidc?code=...
+  A->>K: back channel: code + client secret + PKCE verifier
+  K-->>A: id_token (sub, name, email, roles)
+  A-->>B: Set-Cookie roster (HttpOnly, SameSite=Lax), 302 to /x
+  B->>A: API calls and SSE with the cookie
+```
+
+- **Backend-for-frontend.** The API is a confidential client (`roster-api`) and runs the code flow. The browser only
+  ever holds an HttpOnly cookie, never a token, and `EventSource` works because it sends cookies. The web app's dev
+  proxy forwards `/api`, so the callback lands on the web app's origin and the cookie is set there.
+- **Who owns what.** Keycloak owns accounts, passwords, registration and the permission roles `admin` and `member`
+  (realm roles, emitted as a flat `roles` claim). New accounts get `member`. A seeded `admin@roster.local` gets
+  `admin`. The app keys its own `AppUser` row by the token's `sub` and stores what Keycloak does not: the free-text
+  **title** (`Security Engineer`, `Product Owner`, ...) shown as `Priya Nair · Security Engineer` and snapshotted onto
+  every card and decision, so feedback can later be weighed by who gave it.
+- **Endpoints.** `GET /api/auth/login`, `GET /api/auth/register` (`prompt=create` opens Keycloak's registration page),
+  `POST /api/auth/logout` (a form post; also ends the Keycloak session with `id_token_hint`), `GET /api/auth/me`. Every
+  other endpoint requires a signed-in person by default; `admin` is a named policy.
+- **CSRF.** Unsafe requests must carry an `X-Roster` header in addition to the `SameSite=Lax` cookie. Logout is the one
+  exception, because it is a top-level form post that ends in a redirect to Keycloak.
+- **Local setup.** The realm (`src/Roster.AppHost/Realms/roster-realm.json`, explained by the README next to it) is
+  imported on first start. The client secret and the seeded admin password are generated by the AppHost, kept in its
+  user secrets and handed to Keycloak as import placeholders, so nothing secret is committed. Keycloak keeps its data
+  in a volume; to re-import after editing the realm, remove the volume.
+- **Not used:** pushed authorization requests (PAR). The .NET handler uses them when Keycloak offers them, but Keycloak
+  26.6 ignored `prompt=create` inside a pushed request, and local sign-in does not need them.
+- **Deployment later.** `WithRealmImport` is development-only. A deployed Keycloak needs the realm baked into an image or
+  applied by a seeding job, and `Keycloak:Authority` set to an `https` URL.
 
 ## 11. Feedback: ledger, retro, scorecards, lessons
 

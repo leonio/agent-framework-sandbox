@@ -1,13 +1,16 @@
 # Handoff: Roster slice 1
 
-Written at the end of the first working session (2 Oct 2026) so a fresh session, human or AI, can continue without the
-conversation. Read [`architecture.md`](architecture.md) for the design. This file is the status, the decisions made
+Written at the end of the first working session (2 Oct 2026) and updated in the second (same day, Keycloak) so a fresh
+session, human or AI, can continue without the conversation. Read [`architecture.md`](architecture.md) for the design. This file is the status, the decisions made
 since, the environment notes, and an ordered plan for what is left.
 
 ## 0. Ground rules from the owner
 
 - Personal project. Repo `leonio/agent-framework-sandbox`, branch **`claude/modest-lamport-rm5j2v`**.
-- **Many small commits, pushed as you go. No pull requests** unless asked.
+- **Many small commits, pushed as you go**, each one building. No big boil-the-ocean commits. **No pull requests** unless
+  asked.
+- **Plenty of comments** explaining what the code does and why, especially in the agent runtime and platform code.
+  Files that cannot hold comments (realm JSON) get a README next to them.
 - **No tests.** Verify by compiling, running the stack locally and looking at it.
 - C# on .NET 10, React 19.3 + Tailwind v4 + Vite 8 + TypeScript 7, Aspire 13.6 for orchestration, latest stable of everything.
 - Commit trailers: `Co-Authored-By: Claude <noreply@anthropic.com>` plus the session line the harness gives you. Never put a
@@ -27,9 +30,14 @@ since, the environment notes, and an ordered plan for what is left.
 | `Roster.Agents.Abstractions` | Done, builds |
 | `Roster.Agents.Library` (3 reviewers, retro facilitator, 3 skills, contracts) | Done, builds |
 | `Roster.Agents.Runtime`: `ManifestParser`, `AgentCatalog` | Done, builds, **smoke-run**: loads the 4 agents, hashes, placement |
-| Rest of the runtime, platform, migrator, runner, API, AppHost, web | **Not started** (plan in section 5) |
+| `Roster.ServiceDefaults` | Done (template-shaped) |
+| `Roster.Api`: Keycloak sign-in only (login, register, logout, me, `X-Roster` check, fallback policy) | Done, **run** |
+| `Roster.AppHost`: Keycloak (realm import, data volume, generated secrets) + api | Done, **run under Docker**, browser-tested |
+| Rest of the runtime, platform, migrator, runner, rest of the API, rest of the AppHost, web | **Not started** (plan in section 5) |
 
-Nothing in the platform has been run against a database, a model or a browser yet.
+The sign-in slice has been run end to end in the sandbox (section 3 says how): Keycloak imported the realm; Playwright
+signed in as the seeded admin (`roles: [member, admin]`) and as a newly registered person (`roles: [member]`), signed out
+(the Keycloak session ended too) and was refused an open redirect. Nothing has touched a database or a model yet.
 
 ## 2. Decisions made after the design doc
 
@@ -40,7 +48,10 @@ These came from the owner in conversation. The design doc already reflects most 
    the `retro-facilitator` agent instead of a form. The facilitator can read the assignment's outputs, chats and
    reasoning ("thinking") where the endpoint captured it. The person confirms the cards; nothing is saved without them.
 3. **Real identities, role in the name.** Shown as `Name · Title`. The owner delegated the role list: permission roles
-   are `admin` and `member`, plus a free-text title. **Keycloak was dropped** for ASP.NET Core Identity (cookie auth).
+   are `admin` and `member`, plus a free-text title. **Keycloak is in** (second session): the owner definitely wants it
+   in the Aspire topology even though the integration is preview. This **reverses** the first session's choice of
+   ASP.NET Core Identity. Keycloak owns accounts and the two roles; the app owns the title, keyed by the `sub` claim.
+   There is no "first account becomes admin" rule any more: the realm seeds `admin@roster.local`.
 4. **Users bring their own credentials**: BYOK API keys and/or their own Copilot seat token. The app uses them in the
    background. **Verified feasible** from the Copilot SDK docs: per-session `gitHubToken`; `gho_`, `ghu_` and
    `github_pat_` tokens work, classic `ghp_` does not; the app owns storage and refresh; BYOK needs no seat.
@@ -48,6 +59,9 @@ These came from the owner in conversation. The design doc already reflects most 
 6. Owner asked for, and got: the comment in sample 02, the A2A fleet spike in its own folder with a doc, the design doc
    committed. The A2A fleet is **not** part of Roster yet (design doc D13).
 7. A tiny **`fake` endpoint kind** is part of the plan (offline runs, scale demos). It is a dev tool, not a test.
+9. **Keep sign-in basic.** Pushed authorization requests (PAR) are switched off: Keycloak 26.6 ignored `prompt=create`
+   when it came inside a pushed request (seen here; not checked against Keycloak's issue tracker), and the owner said
+   to drop PAR rather than work around it. Code flow with PKCE and a confidential client stays.
 8. The owner shared a link for how to handle keys:
    `leonio/Agent-Framework-Samples/blob/main/03.ExploerAgentFramework/README.md`. **It could not be read**: the session has
    no access to that repository (add-repo said not found, a plain fetch returned 503), so it is probably private. Ask the

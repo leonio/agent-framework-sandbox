@@ -10,8 +10,10 @@ Start with the design: [`docs/architecture.md`](docs/architecture.md).
 
 | Slice | Scenario | State |
 | --- | --- | --- |
-| 1 | PR review: three reviewer agents, triage with reasons, retro | In progress |
+| 1 | PR review: three reviewer agents, triage with reasons, retro | In progress: abstractions, agent library and catalog built; runtime, platform, runner, API, AppHost and web still to do |
 | 2 | Incident triage, sandbox pool, Copilot-backed developer, lessons | Planned |
 | 3 | Idea to code | Planned |
 
-See the "Verified facts" and "Risks" sections of the design doc for what has and hasn't been exercised.
+Picking this up? Read [`docs/HANDOFF.md`](docs/HANDOFF.md) first: it has the status, the decisions made since the design,
+environment notes and an ordered plan. See the "Verified facts" and "Risks" sections of the design doc for what has and
+hasn't been exercised.

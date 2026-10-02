@@ -34,7 +34,8 @@ since, the environment notes, and an ordered plan for what is left.
 | `Roster.ServiceDefaults` | Done (template-shaped) |
 | `Roster.Api`: Keycloak sign-in only (login, register, logout, me, `X-Roster` check, fallback policy) | Done, **run** |
 | `Roster.AppHost`: Keycloak (realm import, data volume, generated secrets) + api | Done, **run under Docker**, browser-tested |
-| Platform, migrator, runner, rest of the API, rest of the AppHost, web | **Not started** (plan in section 5, from step 2) |
+| `Roster.Platform`: EF Core entities and migration, vault, model router, ledger, job queue, event bus and stream, PR sources, tools, scenario engine, PR-review scenario, triage, retro, scorecards, job dispatcher, `AddRosterPlatform` | Done, **smoke-run against Postgres 17 in Docker** (below); the GitHub PR source is compiled only |
+| Migrator, runner, rest of the API, rest of the AppHost, web | **Not started** (plan in section 5, from step 3) |
 
 The sign-in slice has been run end to end in the sandbox (section 3 says how): Keycloak imported the realm; Playwright
 signed in as the seeded admin (`roles: [member, admin]`) and as a newly registered person (`roles: [member]`), signed out
@@ -55,8 +56,28 @@ not committed, per the no-tests rule), against the fake endpoint:
 - The retro facilitator streamed four turns, called `get_timeline` on the first, asked follow-ups, and on "wrap up"
   called `propose_cards` with three cards; the ledger recorded the tool calls with their arguments and results.
 
-Nothing has touched a database or a real model yet. The Ollama and Hugging Face registries are blocked here, so the
-`openai` endpoint kind has not been run against anything.
+The platform has been smoke-run the same way (scratch harness, a real host with `AddRosterPlatform`, Postgres 17 in
+Docker, the fake endpoint):
+
+- `MigrateAsync` built a fresh database from the migration.
+- A fixture assignment went fetch → review → triage through the queue with two worker loops: 8 findings from the three
+  reviewers, ledger rows with hashes, three agent versions recorded, 47 live events through the LISTEN stream.
+- Triage refused a rejection without a reason and a decision by a non-owner; the last decision completed the
+  assignment, with the person's name and title copied onto each finding.
+- The retro ran as five queued turns: the facilitator opened on the rejected finding, followed up, and on "wrap up"
+  proposed three drafts with agent hashes filled in. One was confirmed as is, one edited, one discarded, and a card
+  written from scratch; a card about an agent that did not take part was refused.
+- A second person's run on `fake-flaky` showed `repaired` for all three reviewers.
+- Scorecards per agent and hash, with acceptance rates and the feedback split by title (Security Engineer versus
+  Product Owner).
+- Routing: a step override picked the owner's OpenAI endpoint, its tier map and its sealed key; another step fell
+  back to the shared default; another person's endpoint was refused; cancelling before the first phase worked.
+- A run with a missing endpoint failed three attempts with back-off, the job went Dead and the assignment Failed.
+- The queue alone: 50 jobs, 8 concurrent workers, each claimed once; idempotency keys; lease takeover.
+
+Nothing has touched a real model yet. The Ollama and Hugging Face registries are blocked here, so the `openai`
+endpoint kind has not been run against anything, and the GitHub API only reaches repositories attached to the session,
+so the GitHub PR source has not been run either.
 
 ## 2. Decisions made after the design doc
 
@@ -139,6 +160,11 @@ These came from the owner in conversation. The design doc already reflects most 
                                     PromptRenderer (untrusted fencing), ContractSchemas + StructuredOutput (schemas,
                                     prompted JSON, repair), EndpointGates + ChatClientFactory (openai, fake), Fake/ (the
                                     fake endpoint), AgentRunner{,.Typed,.Chat}, RuntimeServiceCollectionExtensions
+    Roster.Platform/                Data/ (entities, RosterDb, design-time factory), Migrations/, Credentials/SecretVault,
+                                    Models/ModelRouter, Ledger/LedgerRecorder, Queue/ (IJobQueue, PostgresJobQueue,
+                                    EventBus, EventStream, JobDispatcher), Sources/ (fixture, GitHub), Tools/ (assignment
+                                    tools, propose_cards, CapabilityBinder), Scenarios/ (ScenarioEngine, PrReviewScenario,
+                                    FindingDecisions), Retro/ (RetroService, ScorecardService), PlatformHostingExtensions
     Roster.ServiceDefaults/         Aspire service defaults (OTel, health, service discovery, resilience)
     Roster.Api/                     Program.cs, Auth/RosterAuth.cs (cookie + Keycloak OIDC, auth endpoints, X-Roster check)
     Roster.AppHost/                 AppHost.cs (Keycloak + api), Realms/roster-realm.json + README.md

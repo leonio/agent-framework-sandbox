@@ -98,10 +98,10 @@ public static class AssignmentEndpoints
         {
             string me = user.UserId();
             bool everyone = all == true && user.IsAdmin();
-            return await Summaries(db)
-                .Where(a => everyone || a.OwnerId == me)
-                .OrderByDescending(a => a.CreatedAt)
-                .Take(200)
+            return await Summaries(db, db.Assignments.AsNoTracking()
+                    .Where(a => everyone || a.OwnerId == me)
+                    .OrderByDescending(a => a.CreatedAt)
+                    .Take(200))
                 .ToListAsync(cancellationToken);
         });
 
@@ -166,14 +166,16 @@ public static class AssignmentEndpoints
             : throw new UnauthorizedAccessException("This assignment belongs to someone else.");
     }
 
-    private static IQueryable<AssignmentSummary> Summaries(RosterDb db) =>
-        db.Assignments.AsNoTracking().Select(a => new AssignmentSummary(
+    // Filter and order the assignments first, then project: EF Core cannot translate a Where or OrderBy on a positional
+    // record it has just constructed.
+    private static IQueryable<AssignmentSummary> Summaries(RosterDb db, IQueryable<Assignment> assignments) =>
+        assignments.Select(a => new AssignmentSummary(
             a.Id, a.Title, a.Scenario, a.Source, a.State, a.OwnerId, a.CreatedAt, a.CompletedAt,
             db.Findings.Count(f => f.AssignmentId == a.Id),
             db.Findings.Count(f => f.AssignmentId == a.Id && f.Decision == FindingDecision.Pending)));
 
     private static Task<AssignmentSummary?> SummaryAsync(RosterDb db, Guid id, CancellationToken cancellationToken) =>
-        Summaries(db).SingleOrDefaultAsync(a => a.Id == id, cancellationToken);
+        Summaries(db, db.Assignments.AsNoTracking().Where(a => a.Id == id)).SingleOrDefaultAsync(cancellationToken);
 
     private static string DefaultTitle(string source) =>
         source.Equals(FixturePullRequestSource.SamplePr, StringComparison.OrdinalIgnoreCase) ? "Sample pull request (payments)" : source;

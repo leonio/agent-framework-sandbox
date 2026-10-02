@@ -302,9 +302,9 @@ Commit after each numbered step and push. Build after every file group.
    the Keycloak form easily), then: create an assignment on the fixture, wait for the review, decide findings, open a retro, chat, "wrap up",
    confirm cards, read scorecards. Build the web app and screenshot it with Playwright. Fix what breaks.
 9. ~~Update the README status table, the design doc's "Verified facts" and "Risks"~~ **Done**.
-10. **Next: slice 2**, planned task by task in [`slice-2.md`](slice-2.md). Its track 0 holds what is left of slice 1:
-    two doc fixes, reasoning retention, and the real-model check (an OpenAI-compatible endpoint with a key, and the
-    GitHub PR source on a real pull request), which the owner runs on their own machine.
+10. **Next: slice 2**, planned task by task in [`slice-2.md`](slice-2.md). What is left of slice 1 (doc fixes,
+    reasoning retention, the real-model check, two small UI gaps) is in [`slice-1-cleanup.md`](slice-1-cleanup.md),
+    which the owner plans to do on their own machine.
 
 **Done for slice 1 means:** the PR-review scenario runs end to end on the fixture through the UI with the fake endpoint,
 the ledger rows carry agent hashes, the retro conversation produces confirmable cards, scorecards show per agent and hash,

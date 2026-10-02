@@ -203,25 +203,10 @@ Each task: what to build, what it needs first, and what "done" looks like when y
 
 ### Track 0: close slice 1
 
-**0.1 Doc drift.** The design doc names facilitator tools that were built under other names (`get_overview`,
-`get_decisions` and `get_tool_calls` against `get_timeline`, `list_steps`, `get_step`, `get_findings`, `get_reasoning`,
-`get_chat`), and promises scorecard "recurring phrases, rework loops and cost" that slice 1 does not have. Correct
-the tool list; move those scorecard items to the slice they fit (rework loops to slice 3; cost when there is a price
-table). *Needs:* nothing. *Done when:* the doc matches the code.
-
-**0.2 Reasoning retention.** The design doc says stored reasoning is "subject to retention"; nothing deletes it.
-Add a small hourly service in the runner that clears `Reasoning` on invocations older than `Ledger:ReasoningRetentionDays`
-(default 30). It is one idempotent `ExecuteUpdate`, safe with several runner replicas. *Done when:* with the setting
-at 0, a run's reasoning disappears within the hour (or on a shortened interval) and the ledger view says it was
-cleared.
-
-**0.3 Real-model check (owner, on their machine).** The one slice 1 risk that cannot be closed here. Run the stack,
-add an OpenAI-compatible endpoint with your key in settings, and review the sample pull request with it; then try a
-real GitHub pull request URL. *Done when:* the reviewers return findings that parse (or the ledger shows what broke),
-and a note goes into the HANDOFF.
-
-**0.4 Small UI gaps (optional).** Editing an endpoint (the API has `PUT`; the UI only adds and deletes) and an admin
-view of everyone's assignments (the API has `?all=true`). *Done when:* both work in the browser.
+Planned step by step in [`slice-1-cleanup.md`](slice-1-cleanup.md), written to be done on the owner's machine:
+**0.1** make the design doc match the code, **0.2** clear stored reasoning after a set time, **0.3** the real-model
+check and a real GitHub pull request, **0.4** (optional) endpoint editing and the admins' view of everyone's
+assignments.
 
 ### Track L: lessons and proposals
 

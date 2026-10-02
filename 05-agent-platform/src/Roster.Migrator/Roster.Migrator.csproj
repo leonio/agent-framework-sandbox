@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Runs once per start of the stack: applies the EF Core migrations to the roster database, seeds what a fresh
+    database needs (a shared fake endpoint), and exits. The AppHost makes the api and runners wait for it to finish
+    successfully (WaitForCompletion), so they never see an old schema.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Roster.ServiceDefaults\Roster.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Roster.Platform\Roster.Platform.csproj" />
+  </ItemGroup>
+
+</Project>

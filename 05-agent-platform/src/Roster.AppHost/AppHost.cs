@@ -40,12 +40,20 @@ IResourceBuilder<KeycloakResource> keycloak = builder.AddKeycloak("keycloak", po
     .WithEnvironment("ROSTER_ADMIN_PASSWORD", rosterAdminPassword);
 
 // The API: signs people in with Keycloak, serves the web app, enqueues work for the runners and streams events.
-builder.AddProject<Projects.Roster_Api>("api")
+IResourceBuilder<ProjectResource> api = builder.AddProject<Projects.Roster_Api>("api")
     .WithReference(keycloak)
     .WaitFor(keycloak)
     .WithEnvironment("Keycloak__ClientSecret", apiClientSecret)
     .WithReference(rosterDb)
     .WaitForCompletion(migrator)
     .WithEnvironment("Vault__Key", vaultKey);
+
+// The web app: Vite's dev server, which proxies /api (sign-in and the event stream included) to the API it references.
+// AddViteApp runs `npm install` and `npm run dev` and registers the http endpoint; it is pinned to 5173 because the
+// Keycloak realm's redirect URIs name that port.
+builder.AddViteApp("web", "../Roster.Web")
+    .WithReference(api)
+    .WaitFor(api)
+    .WithEndpoint("http", endpoint => endpoint.Port = 5173);
 
 builder.Build().Run();

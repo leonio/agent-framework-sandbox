@@ -1,8 +1,7 @@
 <Project Sdk="Aspire.AppHost.Sdk/13.6.0">
 
   <!--
-    Local topology: Keycloak (identity), Postgres, the migrator, the runners and the API. The web app joins in step 7
-    (HANDOFF section 5).
+    Local topology: Keycloak (identity), Postgres, the migrator, the runners, the API and the web app.
   -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -19,6 +18,7 @@
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.Keycloak" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+    <PackageReference Include="Aspire.Hosting.JavaScript" />
   </ItemGroup>
 
 </Project>

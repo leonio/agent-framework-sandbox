@@ -109,7 +109,7 @@ These came from the owner in conversation. The design doc already reflects most 
 
 ```
 05-agent-platform/
-  Roster.slnx                       3 projects so far
+  Roster.slnx                       6 projects so far
   Directory.Packages.props          central versions, all verified latest stable on 2 Oct 2026
   src/
     Roster.Agents.Abstractions/     manifest, capability catalog + risk classes, placement policy, contracts,
@@ -117,6 +117,9 @@ These came from the owner in conversation. The design doc already reflects most 
     Roster.Agents.Library/          agent-library/agents/{reviewers,retro}/*/AGENT.md, agent-library/skills/*/SKILL.md,
                                     Contracts/ReviewContracts.cs (ChangeReviewInput, Findings, FindingDraft)
     Roster.Agents.Runtime/          ManifestParser (YamlDotNet), AgentCatalog (hashes, skills, contracts)
+    Roster.ServiceDefaults/         Aspire service defaults (OTel, health, service discovery, resilience)
+    Roster.Api/                     Program.cs, Auth/RosterAuth.cs (cookie + Keycloak OIDC, auth endpoints, X-Roster check)
+    Roster.AppHost/                 AppHost.cs (Keycloak + api), Realms/roster-realm.json + README.md
   docs/architecture.md, docs/HANDOFF.md
 spikes/a2a-agent-fleet/             standalone spike, own solution, `./run-spike.sh`
 ```
@@ -130,6 +133,12 @@ Things worth knowing about the code:
 - Front matter is real YAML: **quote any value containing `: `**. The parser now says so with the file name.
 - Contract records mark outside-world fields with `[property: Untrusted]`; the runtime must fence those when it renders
   the prompt.
+- **Auth:** every API endpoint requires a signed-in person (fallback policy) unless marked `AllowAnonymous`; `admin` is a
+  named policy (`RosterAuth.AdminPolicy`). Unsafe requests without `X-Roster` get a 400; an endpoint can opt out with
+  `.WithMetadata(new RosterAuth.WithoutRosterHeader())` (only logout does). The signed-in person's id is the `sub` claim
+  (`MapInboundClaims = false`, so claims keep their JWT names: `sub`, `name`, `email`, `roles`).
+- Keycloak's realm is imported **only when it does not exist**. After editing the realm JSON, delete the Keycloak volume.
+  The generated secrets must stay stable for the same reason; they are `persist: true` parameters in user secrets.
 
 ## 5. Plan for what is left, in order
 

@@ -6,11 +6,12 @@ import { useAssignment, useLiveEvents } from '../api/queries';
 import { useMe } from '../auth';
 import { FindingsTriage } from '../components/FindingsTriage';
 import { LedgerView } from '../components/LedgerView';
+import { RetroPanel } from '../components/RetroPanel';
 import { PhaseStepper } from '../components/PhaseStepper';
 import { AssignmentStateBadge, OutcomeBadge } from '../components/status';
 import { Button, Card, ErrorNote, Spinner, timeAgo } from '../components/ui';
 
-type Tab = 'findings' | 'ledger';
+type Tab = 'findings' | 'retro' | 'ledger';
 
 /**
  * One assignment, live: its phases, what each reviewer is doing, the findings to triage, and the ledger of every
@@ -41,8 +42,12 @@ export function AssignmentPage() {
   // What each reviewer is doing right now: its latest ledger row in the review phase.
   const latestReview = new Map(d.steps.filter(s => s.phase === 'review').map(s => [s.agent, s]));
 
+  // The agents a retro card can be about: the ones that worked on this assignment (not the facilitator itself).
+  const agentsInvolved = [...new Set(d.steps.filter(s => s.phase !== 'retro').map(s => s.agent))];
+
   const tabs: [Tab, string][] = [
     ['findings', `Findings${undecided > 0 ? ` (${undecided} to decide)` : ''}`],
+    ['retro', 'Retro'],
     ['ledger', `Ledger (${d.steps.length})`],
   ];
 
@@ -98,6 +103,7 @@ export function AssignmentPage() {
       </div>
 
       {tab === 'findings' && <FindingsTriage detail={d} canDecide={owner} />}
+      {tab === 'retro' && <RetroPanel assignmentId={id} isOwner={owner} agents={agentsInvolved} />}
       {tab === 'ledger' && <LedgerView assignmentId={id} steps={d.steps} />}
     </div>
   );

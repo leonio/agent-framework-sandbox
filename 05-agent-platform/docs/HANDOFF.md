@@ -32,10 +32,11 @@ since, the environment notes, and an ordered plan for what is left.
 | `Roster.Agents.Runtime`: `ManifestParser`, `AgentCatalog` | Done, builds, **smoke-run**: loads the 4 agents, hashes, placement |
 | `Roster.Agents.Runtime` remainder: `PromptRenderer`, `ContractSchemas`, `StructuredOutput`, `EndpointGates`, `ChatClientFactory`, the fake endpoint, `AgentRunner` (typed + chat), `AddRosterAgentRuntime` | Done, **smoke-run with the fake endpoint** (below); the `openai` kind is compiled only |
 | `Roster.ServiceDefaults` | Done (template-shaped) |
-| `Roster.Api`: Keycloak sign-in only (login, register, logout, me, `X-Roster` check, fallback policy) | Done, **run** |
-| `Roster.AppHost`: Keycloak (realm import, data volume, generated secrets) + api | Done, **run under Docker**, browser-tested |
+| `Roster.Api`: Keycloak sign-in, profile, credentials, endpoints, agents and scorecards, assignments and triage, SSE, retro, OpenAPI | Done, **run under Aspire and driven through a signed-in browser** |
+| `Roster.AppHost`: Keycloak, Postgres, migrator, two runner replicas, api, generated secrets including `vault-key` | Done, **run under Docker** |
+| `Roster.Migrator` (migrate and seed) and `Roster.Runner` (claim loops with heartbeats) | Done, **run** (standalone and under Aspire; runner crash-tested) |
 | `Roster.Platform`: EF Core entities and migration, vault, model router, ledger, job queue, event bus and stream, PR sources, tools, scenario engine, PR-review scenario, triage, retro, scorecards, job dispatcher, `AddRosterPlatform` | Done, **smoke-run against Postgres 17 in Docker** (below); the GitHub PR source is compiled only |
-| Migrator, runner, rest of the API, rest of the AppHost, web | **Not started** (plan in section 5, from step 3) |
+| Web app (`Roster.Web`) and its place in the AppHost | **Not started** (plan in section 5, step 7) |
 
 The sign-in slice has been run end to end in the sandbox (section 3 says how): Keycloak imported the realm; Playwright
 signed in as the seeded admin (`roles: [member, admin]`) and as a newly registered person (`roles: [member]`), signed out
@@ -74,6 +75,23 @@ Docker, the fake endpoint):
   back to the shared default; another person's endpoint was refused; cancelling before the first phase worked.
 - A run with a missing endpoint failed three attempts with back-off, the job went Dead and the assignment Failed.
 - The queue alone: 50 jobs, 8 concurrent workers, each claimed once; idempotency keys; lease takeover.
+
+The hosts have been run too:
+
+- **Migrator**: migrated and seeded a fresh database, then found it current on a second run.
+- **Runners**: two standalone runner processes shared one assignment and its retro. Killing one with `-9` in the
+  middle of the review phase left the job leased; after the 6-second test lease the other runner reclaimed it and
+  finished it on attempt 2, with no duplicate findings.
+- **Under Aspire**: the migrator finished, the api and both runner replicas came up after it, and an assignment ran on
+  the replicas. The dashboard shows a whole assignment as one trace: three job spans across the two replicas, with the
+  agents' `chat` spans and their GenAI attributes inside. Idle claim polling no longer adds traces.
+- **The API, through a browser**: Playwright signed in through Keycloak and drove every endpoint with the session
+  cookie: profile and title, write-only credentials (a classic `ghp_` token refused), endpoints (a bad tier refused),
+  the agent catalogue, an assignment watched over SSE (16 events from start to awaiting triage), the detail and ledger
+  views (untrusted fences visible in the stored input), triage (a rejection without a reason refused), the retro (409
+  while the facilitator is answering; drafts; a card confirmed as "Roster Admin · Security Engineer"), scorecards.
+  A newly registered member got 403 on the admin's assignment, 404 on their retro, 403 creating a shared endpoint,
+  400 using the admin's endpoint, 400 without `X-Roster`, and could cancel their own assignment.
 
 Nothing has touched a real model yet. The Ollama and Hugging Face registries are blocked here, so the `openai`
 endpoint kind has not been run against anything, and the GitHub API only reaches repositories attached to the session,

@@ -4,7 +4,12 @@ using Microsoft.Extensions.AI;
 namespace Roster.Agents;
 
 /// <summary>Who is running what, for which assignment. Everything the ledger and the tools need to scope their work.</summary>
-public sealed record AgentRunContext(Guid AssignmentId, Guid UserId, string PhaseKey, string StepKey, int Attempt = 1)
+/// <param name="AssignmentId">The assignment the call belongs to.</param>
+/// <param name="UserId">The person it runs for: their identity provider subject (Keycloak's <c>sub</c>), as a string.</param>
+/// <param name="PhaseKey">The scenario phase, such as <c>review</c>.</param>
+/// <param name="StepKey">The step within the phase, usually the agent's name.</param>
+/// <param name="Attempt">The phase attempt, so a retried phase adds ledger rows instead of overwriting them.</param>
+public sealed record AgentRunContext(Guid AssignmentId, string UserId, string PhaseKey, string StepKey, int Attempt = 1)
 {
     public string? TraceParent { get; init; }
 

@@ -7,8 +7,32 @@ IResourceBuilder<ParameterResource> apiClientSecret = builder.AddParameter(
 IResourceBuilder<ParameterResource> rosterAdminPassword = builder.AddParameter(
     "roster-admin-password", new GenerateParameterDefault { MinLength = 16, Special = false }, secret: true, persist: true);
 
+// The credential vault's master key (design doc section 9). Losing it makes stored credentials unreadable, so it is
+// persisted like the others; outside local runs it would come from a secret store.
+IResourceBuilder<ParameterResource> vaultKey = builder.AddParameter(
+    "vault-key", new GenerateParameterDefault { MinLength = 48, Special = false }, secret: true, persist: true);
+
+// The database: Postgres with its data in a volume, and the roster database everything shares.
+IResourceBuilder<PostgresDatabaseResource> rosterDb = builder.AddPostgres("postgres")
+    .WithDataVolume()
+    .AddDatabase("roster");
+
+// Runs once per start: applies migrations and seeds the shared fake endpoint. Everything else waits for it to finish.
+IResourceBuilder<ProjectResource> migrator = builder.AddProject<Projects.Roster_Migrator>("migrator")
+    .WithReference(rosterDb)
+    .WaitFor(rosterDb);
+
+// Runners claim jobs from the database queue. Two replicas show the queue sharing work; they need no inbound
+// endpoints and no Keycloak (they never sign anyone in), but they open credentials, so they get the vault key.
+builder.AddProject<Projects.Roster_Runner>("runner")
+    .WithReference(rosterDb)
+    .WaitForCompletion(migrator)
+    .WithEnvironment("Vault__Key", vaultKey)
+    .WithReplicas(2);
+
 // Identity provider. The Aspire integration is preview (design doc D10). The port is pinned because the realm's redirect
-// URIs and the browser's cookies depend on it. Realms/roster-realm.json reads the two values above from the environment.
+// URIs and the browser's cookies depend on it. Realms/roster-realm.json reads the client secret and the seeded admin
+// password from the environment.
 IResourceBuilder<KeycloakResource> keycloak = builder.AddKeycloak("keycloak", port: 8080)
     .WithDataVolume()
     .WithRealmImport("./Realms")

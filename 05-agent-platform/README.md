@@ -10,7 +10,7 @@ Start with the design: [`docs/architecture.md`](docs/architecture.md).
 
 | Slice | Scenario | State |
 | --- | --- | --- |
-| 1 | PR review: three reviewer agents, triage with reasons, retro | In progress: abstractions, agent library and catalog built; runtime, platform, runner, API, AppHost and web still to do |
+| 1 | PR review: three reviewer agents, triage with reasons, retro | In progress: abstractions, agent library and catalog built; Keycloak sign-in in the API and the AppHost, run under Aspire; runtime, platform, runner, rest of the API and web still to do |
 | 2 | Incident triage, sandbox pool, Copilot-backed developer, lessons | Planned |
 | 3 | Idea to code | Planned |
 

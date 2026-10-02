@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Builds and runs agents: loads AGENT.md packages, composes instructions, picks the output strategy, calls the model
+    through Agent Framework, validates the typed result and records the ledger row. Knows nothing about Postgres,
+    HTTP or the scenarios; it meets the platform through the interfaces in Roster.Agents.Abstractions.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\Roster.Agents.Abstractions\Roster.Agents.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Agents.AI" />
+    <PackageReference Include="Microsoft.Extensions.AI" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
+    <PackageReference Include="YamlDotNet" />
+    <PackageReference Include="JsonSchema.Net" />
+  </ItemGroup>
+
+</Project>

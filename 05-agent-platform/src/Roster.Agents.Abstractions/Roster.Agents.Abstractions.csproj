@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The only project an agent in the library may reference. It holds the vocabulary (manifest, capabilities, placement,
+    contracts) and the interfaces the runtime and the platform meet at. Deliberately light: no Agent Framework, no
+    EF Core, no HTTP.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" />
+  </ItemGroup>
+
+</Project>

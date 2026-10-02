@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Roster.Agents.Abstractions/Roster.Agents.Abstractions.csproj" />
+    <Project Path="src/Roster.Agents.Library/Roster.Agents.Library.csproj" />
+    <Project Path="src/Roster.Agents.Runtime/Roster.Agents.Runtime.csproj" />
+  </Folder>
+</Solution>

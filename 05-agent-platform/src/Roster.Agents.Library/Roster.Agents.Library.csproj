@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The agent library. It references only Roster.Agents.Abstractions: no workflows, no hosts, no Jira or GitHub.
+    Agents ship as markdown content next to the assembly so their behaviour can be edited without a rebuild, and
+    a consuming host picks them up through the project reference.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\Roster.Agents.Abstractions\Roster.Agents.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="agent-library\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

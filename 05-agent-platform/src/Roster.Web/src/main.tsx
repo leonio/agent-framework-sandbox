@@ -5,7 +5,7 @@ import { createBrowserRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { AuthGate } from './auth';
 import { Layout } from './components/Layout';
-import { Welcome } from './pages/Welcome';
+import { AssignmentsPage } from './pages/AssignmentsPage';
 import './index.css';
 
 // Server state lives in TanStack Query. Live updates come from the server-sent events stream, which invalidates
@@ -17,7 +17,7 @@ const queryClient = new QueryClient({
 const router = createBrowserRouter([
   {
     element: <Layout />,
-    children: [{ index: true, element: <Welcome /> }],
+    children: [{ index: true, element: <AssignmentsPage /> }],
   },
 ]);
 

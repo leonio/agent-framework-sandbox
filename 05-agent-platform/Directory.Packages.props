@@ -1,7 +1,8 @@
 <Project>
   <!--
     Central package management. Versions are the latest stable as of 2 Oct 2026 (see docs/architecture.md, section 15).
-    Agent Framework core is GA. Nothing here depends on a preview package except Aspire's Keycloak, which we do not use.
+    Agent Framework core is GA. The one deliberate preview dependency is Aspire's Keycloak integration (hosting and
+    client), chosen by the owner knowing it is preview (design doc D10). Keycloak itself is a stable product.
   -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
@@ -18,11 +19,13 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
-    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.12" />
     <PackageVersion Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.6.0" />
     <!-- Aspire -->
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.6.0" />
     <PackageVersion Include="Aspire.Hosting.JavaScript" Version="13.6.0" />
+    <PackageVersion Include="Aspire.Hosting.Keycloak" Version="13.6.0-preview.1.26479.8" />
+    <!-- Identity -->
+    <PackageVersion Include="Aspire.Keycloak.Authentication" Version="13.6.0-preview.1.26479.8" />
     <!-- Service defaults -->
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.10.0" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.10.0" />

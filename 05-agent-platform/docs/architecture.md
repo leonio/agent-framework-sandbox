@@ -433,4 +433,5 @@ Aspire facts come from the `microsoft/aspire.dev` docs source and Copilot facts 
 
 ## 17. Working agreement
 
-Small commits on `claude/modest-lamport-rm5j2v`. No pull requests unless asked. No tests. Comments explain why, not what.
+Many small commits on `claude/modest-lamport-rm5j2v`, pushed as you go. No pull requests unless asked. No tests.
+Plenty of comments that explain what the code does and why, especially in the agent runtime and platform.

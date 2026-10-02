@@ -186,7 +186,8 @@ function CardFields({ sentiment, text, agent, agents, onChange }: {
 }) {
   return (
     <div className="space-y-2">
-      <div className="flex gap-2">
+      {/* The sentiment needs little room; the agent's name gets the rest, so "security-reviewer" is not cut short. */}
+      <div className="grid grid-cols-[6rem_1fr] gap-2">
         <select className={field} value={sentiment} onChange={e => onChange({ sentiment: e.target.value as Sentiment, text, agent })}>
           <option value="good">Good</option>
           <option value="bad">Bad</option>

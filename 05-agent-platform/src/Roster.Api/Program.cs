@@ -50,5 +50,6 @@ app.MapModelEndpointApi();
 app.MapAgentEndpoints();
 app.MapAssignmentEndpoints();
 app.MapEventEndpoints();
+app.MapRetroEndpoints();
 
 app.Run();

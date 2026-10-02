@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using OpenTelemetry;
 using Roster.Platform.Queue;
 
 namespace Roster.Runner;
@@ -77,7 +78,13 @@ public sealed class RunnerService(
             ClaimedJob? job;
             try
             {
-                job = await queue.ClaimAsync(Options.Pool, workerId, Lease, stoppingToken);
+                // No telemetry for the claim itself: an idle loop polls every second, and each poll would otherwise be
+                // a trace of its own in the dashboard, burying the real work. What matters is the job's span, which
+                // continues the trace of whoever enqueued it.
+                using (SuppressInstrumentationScope.Begin())
+                {
+                    job = await queue.ClaimAsync(Options.Pool, workerId, Lease, stoppingToken);
+                }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {

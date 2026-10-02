@@ -23,6 +23,10 @@ public static class Extensions
     // so service defaults stay independent of the agent code).
     private const string ModelTelemetrySource = "Roster.Models";
 
+    // Queue jobs: one span per job on the runner, continuing the trace of the request that enqueued it. Must match
+    // JobDispatcher.ActivitySourceName in Roster.Platform.
+    private const string JobTelemetrySource = "Roster.Jobs";
+
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         builder.ConfigureOpenTelemetry();
@@ -60,6 +64,7 @@ public static class Extensions
             {
                 tracing.AddSource(builder.Environment.ApplicationName)
                     .AddSource(ModelTelemetrySource)
+                    .AddSource(JobTelemetrySource)
                     .AddAspNetCoreInstrumentation(options =>
                         options.Filter = context =>
                             !context.Request.Path.StartsWithSegments(HealthEndpointPath)

@@ -39,6 +39,10 @@ the UI and bring their own keys; and feedback is a conversational retro that fee
 | --- | --- | --- | --- |
 | 05 | [Roster](05-agent-platform/) | ASP.NET Core + React + Aspire | Design in [`05-agent-platform/docs/architecture.md`](05-agent-platform/docs/architecture.md); built in slices. |
 
+A spike sits beside it, not part of it: [`spikes/a2a-agent-fleet`](spikes/a2a-agent-fleet/) explores letting each team own
+and run its own agents behind A2A, with a published contract the platform pins. It runs end to end with
+`./run-spike.sh`; its README records what it showed and what it would take to adopt.
+
 ## How they fit together
 
 The four samples follow one delivery story and one architecture, and each adds something the
@@ -150,7 +154,8 @@ long-running, persisted workflows.
 ├─ 02-sdlc-studio-web/            ASP.NET Core API + React UI + tests
 ├─ 03-mr-architecture-review/     console + tests
 ├─ 04-incident-triage/            console
-└─ 05-agent-platform/             Roster: design doc, then the platform built in slices
+├─ 05-agent-platform/             Roster: design doc, then the platform built in slices
+└─ spikes/a2a-agent-fleet/        spike: team-owned agents behind A2A (not part of Roster)
 ```
 
 The samples share no code on purpose: each is meant to be read, copied and changed on its own. Where they

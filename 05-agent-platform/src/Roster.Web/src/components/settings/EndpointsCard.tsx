@@ -160,7 +160,7 @@ function AddEndpointForm({ admin }: { admin: boolean }) {
     <details className="rounded-lg border border-slate-200 p-4 dark:border-slate-800">
       <summary className="cursor-pointer text-sm font-semibold">Add an endpoint</summary>
       <form onSubmit={submit} className="mt-4 space-y-4">
-        <div className="grid gap-4 sm:grid-cols-[1fr_10rem]">
+        <div className="grid gap-4 sm:grid-cols-[1fr_14rem]">
           <Label text="Name">
             <input id="endpoint-name" className={field} maxLength={80} placeholder="e.g. My OpenAI" value={draft.name} onChange={e => set({ name: e.target.value })} />
           </Label>

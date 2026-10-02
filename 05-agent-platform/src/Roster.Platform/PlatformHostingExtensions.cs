@@ -37,16 +37,8 @@ public static class PlatformHostingExtensions
     /// </remarks>
     public static IHostApplicationBuilder AddRosterPlatform(this IHostApplicationBuilder builder, string connectionName = "roster")
     {
-        string connectionString = builder.Configuration.GetConnectionString(connectionName)
-            ?? throw new InvalidOperationException(
-                $"No connection string '{connectionName}'. The AppHost provides it; outside Aspire set ConnectionStrings__{connectionName}.");
-
+        builder.AddRosterDatabase(connectionName);
         IServiceCollection services = builder.Services;
-
-        // Database.
-        services.AddPooledDbContextFactory<RosterDb>(options => options.UseNpgsql(connectionString).UseSnakeCaseNamingConvention());
-        services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<RosterDb>>().CreateDbContext());
-        builder.EnrichNpgsqlDbContext<RosterDb>();
 
         // Options.
         services.Configure<VaultOptions>(builder.Configuration.GetSection("Vault"));
@@ -82,6 +74,22 @@ public static class PlatformHostingExtensions
         services.AddTransient<ScorecardService>();
         services.AddTransient<JobDispatcher>();
 
+        return builder;
+    }
+
+    /// <summary>
+    /// Registers only the database: the pooled <see cref="RosterDb"/> factory, a scoped context made from it, and Aspire's
+    /// retries, health check and telemetry. <see cref="AddRosterPlatform"/> calls it; the migrator needs nothing more.
+    /// </summary>
+    public static IHostApplicationBuilder AddRosterDatabase(this IHostApplicationBuilder builder, string connectionName = "roster")
+    {
+        string connectionString = builder.Configuration.GetConnectionString(connectionName)
+            ?? throw new InvalidOperationException(
+                $"No connection string '{connectionName}'. The AppHost provides it; outside Aspire set ConnectionStrings__{connectionName}.");
+
+        builder.Services.AddPooledDbContextFactory<RosterDb>(options => options.UseNpgsql(connectionString).UseSnakeCaseNamingConvention());
+        builder.Services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<RosterDb>>().CreateDbContext());
+        builder.EnrichNpgsqlDbContext<RosterDb>();
         return builder;
     }
 

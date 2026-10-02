@@ -423,8 +423,9 @@ Aspire facts come from the `microsoft/aspire.dev` docs source and Copilot facts 
   tools). The platform was smoke-run against Postgres 17 in Docker: migrations, the queue with concurrent workers, a
   full assignment from fetch to triage, a retro ending in confirmed cards, scorecards, routing and access rules,
   retries until dead, and the LISTEN event stream. The `openai` endpoint kind and the GitHub PR source are compiled but
-  have not met a real model or GitHub: the sandbox cannot reach either. The migrator, runner, API endpoints and web
-  app are still to be built and run.
+  have not met a real model or GitHub: the sandbox cannot reach either. The migrator, the runners (including a runner
+  killed mid-job and the job reclaimed by another) and every API endpoint have run under Aspire, the API driven through
+  a browser signed in with Keycloak. The web app is still to be built and run.
 - **Keycloak integration is preview.** Its API may change between Aspire releases. The surface used is small:
   `AddKeycloak`, `WithDataVolume`, `WithRealmImport`, `AddKeycloakOpenIdConnect`.
 - **Copilot specifics.** The SDK's structured output is experimental, and the runtime download happens at build time.

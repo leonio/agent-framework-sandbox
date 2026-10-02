@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!--
+      MEAI001 / MAAI001: Microsoft.Extensions.AI and Agent Framework mark a few APIs experimental. We acknowledge it
+      once here rather than at every call site; the design doc lists preview and experimental surfaces as risks.
+    -->
+    <NoWarn>$(NoWarn);MEAI001;MAAI001;CS8305</NoWarn>
+  </PropertyGroup>
+</Project>

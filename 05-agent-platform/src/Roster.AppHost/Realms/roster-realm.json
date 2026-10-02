@@ -1,0 +1,111 @@
+{
+  "realm": "roster",
+  "displayName": "Roster",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "verifyEmail": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": true,
+  "bruteForceProtected": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "Roster administrator: shared endpoints, registration settings, everyone's assignments."
+      },
+      {
+        "name": "member",
+        "description": "Roster member: own assignments, endpoints and credentials."
+      },
+      {
+        "name": "offline_access",
+        "description": "Keycloak built-in: offline tokens."
+      },
+      {
+        "name": "uma_authorization",
+        "description": "Keycloak built-in: UMA authorization."
+      },
+      {
+        "name": "default-roles-roster",
+        "description": "Roles every new account gets.",
+        "composite": true,
+        "composites": {
+          "realm": ["member", "offline_access", "uma_authorization"],
+          "client": {
+            "account": ["view-profile", "manage-account"]
+          }
+        }
+      }
+    ]
+  },
+  "defaultRole": {
+    "name": "default-roles-roster",
+    "composite": true
+  },
+  "clients": [
+    {
+      "clientId": "roster-api",
+      "name": "Roster",
+      "description": "The Roster API, signing people in for the web app (backend-for-frontend).",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${ROSTER_API_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "redirectUris": [
+        "http://localhost:5280/api/auth/signin-oidc",
+        "http://localhost:5173/api/auth/signin-oidc"
+      ],
+      "webOrigins": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5280/api/auth/signout-callback-oidc##http://localhost:5173/api/auth/signout-callback-oidc"
+      },
+      "protocolMappers": [
+        {
+          "name": "realm roles as roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "roles",
+            "multivalued": "true",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "id": "5ecb7cd7-0b00-439b-ad39-935a63366e13",
+      "username": "admin@roster.local",
+      "email": "admin@roster.local",
+      "emailVerified": true,
+      "firstName": "Roster",
+      "lastName": "Admin",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${ROSTER_ADMIN_PASSWORD}",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["default-roles-roster", "admin"]
+    }
+  ]
+}

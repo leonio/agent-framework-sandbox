@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TeamA.SecurityReviewer/TeamA.SecurityReviewer.csproj" />
+    <Project Path="src/TeamB.SecretScanner/TeamB.SecretScanner.csproj" />
+    <Project Path="src/Fleet.Client/Fleet.Client.csproj" />
+  </Folder>
+</Solution>

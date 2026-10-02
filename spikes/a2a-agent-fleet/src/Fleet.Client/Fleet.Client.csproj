@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <!--
+    The platform side. Note what is NOT here: no project or file reference to either team's code and no shared contract
+    types. It knows A2A and it reads the published JSON documents, nothing else.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Agents.AI" />
+    <PackageReference Include="Microsoft.Agents.AI.A2A" />
+    <PackageReference Include="A2A" />
+    <PackageReference Include="JsonSchema.Net" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\fleet.json" Link="fleet.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\sample-input.json" Link="sample-input.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

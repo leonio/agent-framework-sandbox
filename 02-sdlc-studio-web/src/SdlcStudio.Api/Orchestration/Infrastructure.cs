@@ -94,6 +94,32 @@ public sealed class RunJournal(IDbContextFactory<StudioDbContext> dbFactory, Run
 /// <summary>
 /// Hosted service that executes queued phase jobs, several at once, so many workflows can run in parallel.
 /// </summary>
+/// <remarks>
+/// <para>
+/// LIMITATIONS of running the worker inside the API process. This is fine for one user on one machine, and it is
+/// the simplest thing that works, but it does not scale out or survive a busy day:
+/// </para>
+/// <list type="bullet">
+///   <item>Agent work shares the API's CPU, memory, lifetime and credentials. A deploy or a crash stops every
+///     running phase, and model keys live in the same process that serves HTTP.</item>
+///   <item>Recovery is "requeue on startup" (see <see cref="RequeueInterruptedJobsAsync"/>): every run that is
+///     <c>Running</c> with a <c>PendingJob</c> starts again from the beginning of its phase. There is no lease or
+///     owner, so two API instances starting together would both requeue, and so both execute, the same job.</item>
+///   <item>The queue (a <c>Channel</c>) and <see cref="RunEventHub"/> are in memory, so a second instance can neither
+///     share the work nor stream another instance's events to its browsers.</item>
+/// </list>
+/// <para>
+/// HOW TO IMPROVE. Make the queue a table (<c>jobs</c>: state, pool, lease_until, locked_by, attempts,
+/// idempotency_key) and claim rows with <c>FOR UPDATE SKIP LOCKED</c>. Renew the lease on a heartbeat so a crashed
+/// worker's job becomes claimable again, and keep phases idempotent because they can now run twice. Run the workers
+/// as their own process, or pool, that scales with queue depth (and gets the credentials the API should not have).
+/// Publish events with Postgres <c>LISTEN/NOTIFY</c> or Redis so every API replica can stream them.
+/// </para>
+/// <para>
+/// The platform in <c>05-agent-platform</c> does exactly this; see its <c>docs/architecture.md</c>, section
+/// "Runner, jobs and events".
+/// </para>
+/// </remarks>
 public sealed class PhaseWorker(
     PhaseJobQueue queue,
     IServiceScopeFactory scopes,

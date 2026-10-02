@@ -12,7 +12,9 @@ Every sample:
   `Directory.Packages.props`), so you can copy one folder out and it still builds;
 - runs **offline by default** against a scripted mock `IChatClient`, so agents, tool calls, structured
   output, loops and fan-out all execute for real without an API key, and switches to OpenAI, Azure OpenAI
-  or GitHub Models with one setting;
+  or GitHub Models with one setting. **Note:** GitHub Models was retired on 30 July 2026, so the `GitHubModels`
+  provider option in samples 01 to 03 no longer works; use OpenAI, Azure OpenAI / Foundry or any
+  OpenAI-compatible endpoint instead;
 - is **heavily commented**: each file says why it is written that way, which alternatives were
   considered, and links to the docs;
 - keeps agent behaviour in **Markdown prompts, skills and instructions** loaded at runtime, so you can
@@ -26,6 +28,20 @@ Every sample:
 | 02 | [SDLC Studio](02-sdlc-studio-web/) | ASP.NET Core + React | Takes an idea, or an existing app (folder or zip), through design, spec review, agile plan, dev plan, development with MR checkpoints and test prompts, with a human approving each phase and all state in EF Core. |
 | 03 | [MR architecture review](03-mr-architecture-review/) | Console | Pulls a GitHub pull request and runs design, security and extensibility reviewers in parallel; a human accepts or rejects each finding with a reason, and those reasons feed later reviews. |
 | 04 | [Incident triage](04-incident-triage/) | Console | Points at a repo (plus optional commit or tag) and pasted incident reports; extracts signals, correlates them into incidents, finds a root cause with real RAG over runbooks and code, then drafts the Jira ticket and postmortem. |
+
+## The platform
+
+The samples share no code on purpose. **05 is where their ideas are rebuilt as one platform**: agents become reusable,
+versioned packages in a library; scenarios compose them; work runs in runner pools; people pick the model endpoint in
+the UI and bring their own keys; and feedback is a conversational retro that feeds back into each agent.
+
+| # | Project | Host | Status |
+| --- | --- | --- | --- |
+| 05 | [Roster](05-agent-platform/) | ASP.NET Core + React + Aspire | Design in [`05-agent-platform/docs/architecture.md`](05-agent-platform/docs/architecture.md); built in slices, slice 1 (PR review) runs end to end. |
+
+A spike sits beside it, not part of it: [`spikes/a2a-agent-fleet`](spikes/a2a-agent-fleet/) explores letting each team own
+and run its own agents behind A2A, with a published contract the platform pins. It runs end to end with
+`./run-spike.sh`; its README records what it showed and what it would take to adopt.
 
 ## How they fit together
 
@@ -137,7 +153,9 @@ long-running, persisted workflows.
 ├─ 01-cli-design-pipeline/        console · prompts/, skills/, instructions/ at the sample root
 ├─ 02-sdlc-studio-web/            ASP.NET Core API + React UI + tests
 ├─ 03-mr-architecture-review/     console + tests
-└─ 04-incident-triage/            console
+├─ 04-incident-triage/            console
+├─ 05-agent-platform/             Roster: design doc, then the platform built in slices
+└─ spikes/a2a-agent-fleet/        spike: team-owned agents behind A2A (not part of Roster)
 ```
 
 The samples share no code on purpose: each is meant to be read, copied and changed on its own. Where they

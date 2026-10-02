@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Roster.Agents.Abstractions/Roster.Agents.Abstractions.csproj" />
+    <Project Path="src/Roster.Agents.Library/Roster.Agents.Library.csproj" />
+    <Project Path="src/Roster.Agents.Runtime/Roster.Agents.Runtime.csproj" />
+    <Project Path="src/Roster.Api/Roster.Api.csproj" />
+    <Project Path="src/Roster.AppHost/Roster.AppHost.csproj" />
+    <Project Path="src/Roster.Migrator/Roster.Migrator.csproj" />
+    <Project Path="src/Roster.Platform/Roster.Platform.csproj" />
+    <Project Path="src/Roster.Runner/Roster.Runner.csproj" />
+    <Project Path="src/Roster.ServiceDefaults/Roster.ServiceDefaults.csproj" />
+  </Folder>
+</Solution>

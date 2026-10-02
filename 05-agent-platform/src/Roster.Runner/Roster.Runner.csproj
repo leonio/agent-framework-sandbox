@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    A runner: claims jobs from the Postgres queue and runs them (scenario phases, retro turns), agents included. No
+    inbound endpoints; scale by running more replicas (the AppHost uses WithReplicas) or raising Runner:Concurrency.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Roster.ServiceDefaults\Roster.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Roster.Platform\Roster.Platform.csproj" />
+  </ItemGroup>
+
+</Project>

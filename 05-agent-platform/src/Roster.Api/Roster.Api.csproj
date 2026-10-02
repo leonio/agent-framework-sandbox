@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    The HTTP API and the backend-for-frontend for the web app. Signs people in with Keycloak (OpenID Connect, code
+    flow with PKCE) and keeps the session in an HttpOnly cookie, so the browser never holds a token.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\Roster.ServiceDefaults\Roster.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Roster.Platform\Roster.Platform.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Keycloak.Authentication" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+  </ItemGroup>
+
+</Project>

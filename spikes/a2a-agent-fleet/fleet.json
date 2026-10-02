@@ -1,0 +1,4 @@
+[
+  { "name": "security-reviewer", "baseUrl": "http://localhost:5101", "tokenEnv": "FLEET_TOKEN" },
+  { "name": "secret-scanner",    "baseUrl": "http://localhost:5102", "tokenEnv": "FLEET_TOKEN" }
+]

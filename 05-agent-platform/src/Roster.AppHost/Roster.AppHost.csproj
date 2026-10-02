@@ -1,0 +1,24 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.6.0">
+
+  <!--
+    Local topology: Keycloak (identity), Postgres, the migrator, the runners, the API and the web app.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AspireUseCliBundle>true</AspireUseCliBundle>
+    <UserSecretsId>eaf402b4-c576-4180-b733-6998f5713b52</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Roster.Api\Roster.Api.csproj" />
+    <ProjectReference Include="..\Roster.Migrator\Roster.Migrator.csproj" />
+    <ProjectReference Include="..\Roster.Runner\Roster.Runner.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.Keycloak" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+    <PackageReference Include="Aspire.Hosting.JavaScript" />
+  </ItemGroup>
+
+</Project>

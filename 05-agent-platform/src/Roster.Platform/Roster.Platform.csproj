@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The platform: everything that needs the database. EF Core entities and migrations (RosterDb on Postgres), the
+    implementations of the runtime's interfaces (model routing with the credential vault, the ledger, capabilities as
+    tools), the job queue and event bus, the PR-review scenario, the retro and scorecards. Hosts (api, runner, migrator)
+    reference this project and call AddRosterPlatform().
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\Roster.Agents.Runtime\Roster.Agents.Runtime.csproj" />
+    <ProjectReference Include="..\Roster.Agents.Library\Roster.Agents.Library.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="EFCore.NamingConventions" />
+    <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <!-- Only for `dotnet ef migrations add`; not shipped with hosts. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!--
+    The sample pull request from sample 03, linked rather than copied so there is one source. It is untrusted data like
+    any other PR text (its description even tries to talk to AI reviewers, on purpose).
+  -->
+  <ItemGroup>
+    <Content Include="..\..\..\03-mr-architecture-review\src\MrArchitectureReview\Fixtures\SamplePr\**\*"
+             LinkBase="fixtures\sample-pr"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

@@ -128,9 +128,10 @@ public sealed class AgentCatalog : IAgentCatalog
             sb.Append(skill.Name).Append('\n').Append(skill.Body.ReplaceLineEndings("\n")).Append('\n');
         }
 
+        // The exact schema the runner sends and validates against, so a change to the contract is a new version.
         if (outputType is not null)
         {
-            sb.Append(AIJsonUtilities.CreateJsonSchema(outputType, serializerOptions: ContractJson.Options).GetRawText());
+            sb.Append(ContractSchemas.For(outputType).Json.GetRawText());
         }
 
         return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString())));

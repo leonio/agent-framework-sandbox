@@ -116,7 +116,7 @@ public sealed class PostgresJobQueue(IDbContextFactory<RosterDb> dbs, ILogger<Po
         }
 
         logger.LogInformation("Worker {Worker} claimed {Kind} job {JobId} (attempt {Attempt})", workerId, job.Kind, job.Id, job.Attempts);
-        return new ClaimedJob(job.Id, job.Kind, job.PayloadJson, job.Attempts, job.TraceParent);
+        return new ClaimedJob(job.Id, job.Kind, job.PayloadJson, job.Attempts, job.MaxAttempts, job.TraceParent);
     }
 
     public async Task<bool> HeartbeatAsync(Guid jobId, string workerId, TimeSpan lease, CancellationToken cancellationToken = default)

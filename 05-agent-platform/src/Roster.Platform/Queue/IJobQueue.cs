@@ -43,8 +43,11 @@ public sealed record EnqueueOptions(
     DateTimeOffset? NotBefore = null,
     int MaxAttempts = 3);
 
-/// <summary>What a runner gets when it claims a job.</summary>
-public sealed record ClaimedJob(Guid Id, string Kind, string PayloadJson, int Attempt, string? TraceParent);
+/// <summary>What a runner gets when it claims a job. <see cref="IsLastAttempt"/> tells handlers whether a failure now is final.</summary>
+public sealed record ClaimedJob(Guid Id, string Kind, string PayloadJson, int Attempt, int MaxAttempts, string? TraceParent)
+{
+    public bool IsLastAttempt => Attempt >= MaxAttempts;
+}
 
 /// <summary>Payload of a <see cref="JobKinds.PhaseRun"/> job: run this phase of this assignment.</summary>
 public sealed record PhaseRunPayload(Guid AssignmentId, Guid PhaseId);

@@ -59,13 +59,13 @@ These came from the owner in conversation. The design doc already reflects most 
 6. Owner asked for, and got: the comment in sample 02, the A2A fleet spike in its own folder with a doc, the design doc
    committed. The A2A fleet is **not** part of Roster yet (design doc D13).
 7. A tiny **`fake` endpoint kind** is part of the plan (offline runs, scale demos). It is a dev tool, not a test.
-9. **Keep sign-in basic.** Pushed authorization requests (PAR) are switched off: Keycloak 26.6 ignored `prompt=create`
-   when it came inside a pushed request (seen here; not checked against Keycloak's issue tracker), and the owner said
-   to drop PAR rather than work around it. Code flow with PKCE and a confidential client stays.
 8. The owner shared a link for how to handle keys:
    `leonio/Agent-Framework-Samples/blob/main/03.ExploerAgentFramework/README.md`. **It could not be read**: the session has
    no access to that repository (add-repo said not found, a plain fetch returned 503), so it is probably private. Ask the
    owner to paste the relevant section. The credential design in design doc section 9 does not depend on it.
+9. **Keep sign-in basic.** Pushed authorization requests (PAR) are switched off: Keycloak 26.6 ignored `prompt=create`
+   when it came inside a pushed request (seen here; not checked against Keycloak's issue tracker), and the owner said
+   to drop PAR rather than work around it. Code flow with PKCE and a confidential client stays.
 
 ## 3. Environment notes for a fresh container
 
